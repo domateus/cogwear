@@ -1,0 +1,6 @@
+survey_gamification/**
+pyright**
+logs
+cogwear/
+__pycache__/
+survey_gamification.zip
