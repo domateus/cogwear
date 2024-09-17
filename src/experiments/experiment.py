@@ -53,7 +53,6 @@ class Experiment(ABC):
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
                        batch_size=hyperparameters.batch_size)
 
-        # self._clean_up_files(self.trials_path)
         self.logger.info("Finished e" + logging_message[1:])
 
         return metrics, loss
