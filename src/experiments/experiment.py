@@ -1,7 +1,5 @@
-from os.path import exists
-import time
-from math import ceil, floor
-from keras import  backend
+import pandas as pd
+from math import ceil
 from random import randrange
 from src.data.utils import TEST_SUBJECT_IDS, Split, create_classifier,losocv_splits
 from abc import ABC
@@ -9,8 +7,7 @@ from src.data.utils import SUBJECTS_IDS
 from src.signals.subject import Subject
 import os
 import numpy as np
-from src.classifiers.fcn import Fcn
-from src.logger import log_predicions, logger, save_logs
+from src.logger import  logger
 from enum import Enum
 from src.classifiers.hyperparameters import Hyperparameters
 
@@ -31,6 +28,8 @@ class Experiment(ABC):
         self.trials_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "trials", self.classifier)
         self.losocv_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "losocv", self.classifier)
         self.test_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
+        self.test_metrics_path =  os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "test")
+        self.analysis_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "analysis")
         self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg") for id in SUBJECTS_IDS]
         self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg") for id in TEST_SUBJECT_IDS]
         self.splits: list[Split] = []
