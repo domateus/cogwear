@@ -1,0 +1,2 @@
+python -m pip install wheel pandas matplotlib hyperopt
+python -m pip install -U scikit-learn scipy

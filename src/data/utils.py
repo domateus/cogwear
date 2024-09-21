@@ -4,7 +4,7 @@ import numpy as np
 from src.classifiers.classifier import Classifier
 from src.classifiers.fcn import Fcn
 from src.classifiers.cnn import Cnn
-from src.classifiers.resnet import ResNet
+from src.classifiers.resnet import OneDResNet
 from src.classifiers.lstm import Lstm
 from src.signals.subject import Subject
 import itertools as it
@@ -13,7 +13,6 @@ import random
 SUBJECTS_IDS = list(it.chain(range(11, 19), range(20, 25)))
 LOSOCV_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(0, 10)]
 TEST_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(10, 13)]
-SUBJECTS_IDS[10]
 
 class Split():
     def __init__(self, id, train, test, val):
@@ -73,7 +72,7 @@ def create_classifier(classifier_name, input_shape, output_directory, hyperparam
     if classifier_name == 'lstm':
         return Lstm(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
     if classifier_name == 'resnet':
-        return ResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return OneDResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
     return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
 
 

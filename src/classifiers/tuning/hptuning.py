@@ -10,7 +10,8 @@ from hyperopt import fmin, tpe, hp, Trials, STATUS_OK, space_eval
 def get_search_space(classifier_name):
     result = {}
     optimizer_subspace = [hp.randint("lr_power", 1, 7), hp.choice("decay", [.001, .0001, .00001, 0]),
-                          hp.choice("reduce_lr_factor", [0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [8, 16, 32, 64]), hp.randint("epochs", 50, 150), hp.randint("baseline_weight", 2, 10)]
+                          hp.choice("reduce_lr_factor", [0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [8, 16, 32, 64]), hp.randint("epochs", 50, 100), hp.randint("baseline_weight", 2, 10)]
+    # 50 - 100
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])

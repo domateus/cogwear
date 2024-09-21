@@ -5,6 +5,7 @@ from src.classifiers.classifier import Classifier
 class Cnn(Classifier):
     def build_model(self, input_shape):
         input_layers = []
+        output_layers = []
 
         filters_multipliers = 1
         kernel_size_multipliers = 1
@@ -16,22 +17,28 @@ class Cnn(Classifier):
         assert kernel_size_multipliers is not None
         assert filters_multipliers is not None
         padding = 'valid'
-        input_layer = layers.Input(input_shape)
-        input_layers.append(input_layer)
+        
+        shape = input_shape if len(input_shape) == 2 else input_shape[1:]
+        cols = 1 if len(input_shape) == 2 else input_shape[0]
 
-        kernel_size = int(kernel_size_multipliers * 7)
+        for _ in range(0, cols):
+            input_layer = layers.Input(shape)
+            input_layers.append(input_layer)
 
-        conv1 = layers.Conv1D(filters=int(filters_multipliers * 6), kernel_size=kernel_size,
-                                    padding=padding, activation='relu')(input_layer)
-        conv1 = layers.AveragePooling1D(pool_size=3)(conv1)
+            kernel_size = int(kernel_size_multipliers * 7)
 
-        conv2 = layers.Conv1D(filters=int(filters_multipliers * 12), kernel_size=kernel_size,
-                                    padding=padding, activation='relu')(conv1)
-        conv2 = layers.AveragePooling1D(pool_size=3)(conv2)
+            conv1 = layers.Conv1D(filters=int(filters_multipliers * 6), kernel_size=kernel_size,
+                                        padding=padding, activation='relu')(input_layer)
+            conv1 = layers.AveragePooling1D(pool_size=3)(conv1)
 
-        flatten_layer = layers.Flatten()(conv2)
+            conv2 = layers.Conv1D(filters=int(filters_multipliers * 12), kernel_size=kernel_size,
+                                        padding=padding, activation='relu')(conv1)
+            conv2 = layers.AveragePooling1D(pool_size=3)(conv2)
+            flatten_layer = layers.Flatten()(conv2)
+            output_layers.append(flatten_layer)
 
-        output_layer = layers.Dense(1, activation='sigmoid')(flatten_layer)
+        flat = layers.concatenate(output_layers, axis=-1) if len(output_layers) > 1 else output_layers[0]
+        output_layer = layers.Dense(1, activation='sigmoid')(flat)
 
         model = models.Model(inputs=input_layers, outputs=output_layer)
 

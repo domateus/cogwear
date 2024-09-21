@@ -13,28 +13,39 @@ class Lstm(Classifier):
             filters_multipliers = 1
             kernel_size_multipliers = 0.5
 
-        input_layer = layers.Input(input_shape)
+        input_layers = []
+        output_layers = []
 
-        assert filters_multipliers is not None
-        assert kernel_size_multipliers is not None
+        shape = input_shape if len(input_shape) == 2 else input_shape[1:]
+        cols = 1 if len(input_shape) == 2 else input_shape[0]
 
-        filters_1 = int(filters_multipliers * 32)
-        filters_2 = int(filters_multipliers * 64)
-        kernel_size_1 = int(kernel_size_multipliers * 2)
-        kernel_size_2 = int(kernel_size_multipliers * 4)
+        for _ in range(0, cols):
+            input_layer = layers.Input(shape)
+            input_layers.append(input_layer)
 
-        # length of convolution window (kernel size) cannot be larger than number of steps
-        conv_layer = layers.Conv1D(filters=filters_1, kernel_size=kernel_size_1)(input_layer)
-        conv_layer = layers.MaxPooling1D(pool_size=2)(conv_layer)
-        conv_layer = layers.Conv1D(filters=filters_2, kernel_size=kernel_size_2, padding='same')(conv_layer)
-        conv_layer = layers.MaxPooling1D(pool_size=2)(conv_layer)
+            assert filters_multipliers is not None
+            assert kernel_size_multipliers is not None
 
-        flatten_layer = layers.TimeDistributed(layers.Flatten())(conv_layer)
-        dense_layer = layers.TimeDistributed(layers.Dense(lstm_units))(flatten_layer)
-        lstm_layer = layers.LSTM(lstm_units)(dense_layer)
-        output_layer = layers.Dense(1, activation='sigmoid')(lstm_layer)
+            filters_1 = int(filters_multipliers * 32)
+            filters_2 = int(filters_multipliers * 64)
+            kernel_size_1 = int(kernel_size_multipliers * 2)
+            kernel_size_2 = int(kernel_size_multipliers * 4)
 
-        model = models.Model(inputs=input_layer, outputs=output_layer)
+            # length of convolution window (kernel size) cannot be larger than number of steps
+            conv_layer = layers.Conv1D(filters=filters_1, kernel_size=kernel_size_1)(input_layer)
+            conv_layer = layers.MaxPooling1D(pool_size=2)(conv_layer)
+            conv_layer = layers.Conv1D(filters=filters_2, kernel_size=kernel_size_2, padding='same')(conv_layer)
+            conv_layer = layers.MaxPooling1D(pool_size=2)(conv_layer)
+
+            flatten_layer = layers.TimeDistributed(layers.Flatten())(conv_layer)
+            dense_layer = layers.TimeDistributed(layers.Dense(lstm_units))(flatten_layer)
+            lstm_layer = layers.LSTM(lstm_units)(dense_layer)
+            output_layers.append(lstm_layer)
+
+        flat = layers.concatenate(output_layers, axis=-1) if len(output_layers) > 1 else output_layers[0]
+        output_layer = layers.Dense(1, activation='sigmoid')(flat)
+
+        model = models.Model(inputs=input_layers, outputs=output_layer)
 
         model.compile(loss='binary_crossentropy', optimizer=self.get_optimizer(), metrics=['precision', 'recall', 'F1Score'])
 

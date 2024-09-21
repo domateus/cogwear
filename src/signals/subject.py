@@ -15,21 +15,24 @@ class Subject(ABC):
         self.id = id
         self._data = self.load()
         discard_time = 4 * self.sampling
-        self._x = Signal(sensor, sensor, self.sampling, self._data[sensor][discard_time:-discard_time])
+        self._x = self._get_signal(discard_time)
         self._y = self._data["y"][discard_time:-discard_time]
         self.x, self.y = self.values()
 
+    def _get_signal(self, discard_time):
+        return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor][discard_time:-discard_time]])
 
     def _get_window(self, index=0, seconds=30, overlap_ratio=0.5):
         window_size = seconds * self._x.sampling
         initial_point = floor(index * window_size * (1 - overlap_ratio))
         y = int(stats.mstats.mode(self._y[initial_point:initial_point+window_size]).mode[0])
-        x = [it for it in self._x.data[initial_point:initial_point+window_size]]
+        x = [it for it in self._x.data[0][initial_point:initial_point+window_size]]
         for _ in range(0, window_size - len(x)):
             x.append(0)
         return x, y
 
-
+    def _expand_dims_axis(self) -> int:
+        return 1
 
     def values(self, seconds=30, overlap_ratio=0):
         window_size = seconds * self._x.sampling
@@ -39,7 +42,7 @@ class Subject(ABC):
         Y = []
         for index in range(0, windows_count):
             x, y = self._get_window(index=index, seconds=seconds, overlap_ratio=overlap_ratio)
-            X.append(np.expand_dims(x, 1))
+            X.append(np.expand_dims(x, self._expand_dims_axis()))
             Y.append([y])
         return X, Y
 
