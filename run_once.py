@@ -5,4 +5,6 @@ import os
 
 path = os.getcwd()
 fcn = Experiment(signal="eeg", classifier="fcn", type=ExperimentType.END_TO_END, path=path, device="muse", subject=EEGSubject)
-Tuner(fcn).tune(max_evals=1)
+# Tuner(fcn).tune(max_evals=40)
+tuner = Tuner(fcn)
+fcn.losocv_run(tuner)

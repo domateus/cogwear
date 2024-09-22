@@ -1,2 +1,3 @@
-precision,recall,duration,f1,loss
-0.5,1.0,13.334935188293457,0.6666666666666666,0.6451133489608765
+version https://git-lfs.github.com/spec/v1
+oid sha256:4d34514c2d4391b91eeb5e516f07b6d0f6572b0662afc741abd75508ed642a43
+size 99

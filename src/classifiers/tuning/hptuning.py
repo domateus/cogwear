@@ -11,7 +11,7 @@ from keras.api.backend import clear_session
 def get_search_space(classifier_name):
     result = {}
     optimizer_subspace = [hp.randint("lr_power", 1, 7), hp.choice("decay", [.001, .0001, .00001, 0]),
-                          hp.choice("reduce_lr_factor", [0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [8, 16, 32, 64]), hp.randint("epochs", 50, 100), hp.randint("baseline_weight", 1, 3)]
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [16, 32, 64, 128, 256]), hp.randint("epochs", 80, 100), hp.randint("baseline_weight", 2, 4)]
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
@@ -57,6 +57,7 @@ class Tuner():
     def tune(self, max_evals):
         trials = self.load_trials()
         start = len(trials)
+        self.logger.info(f"trials length: {len(trials)}")
         space = get_search_space(self.experiment.classifier)
         for i in range(start, max_evals):
             fmin(fn=lambda x: self._objective(x, i),
@@ -87,6 +88,7 @@ class Tuner():
         try:
             if os.path.exists(trials_filename):
                 with open(trials_filename, "rb") as f:
+                    self.logger.info(f"loaded existing trials")
                     return pickle.load(f)
         except EOFError:
             pass

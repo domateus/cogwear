@@ -18,11 +18,11 @@ class Fcn(Classifier):
             conv1 = layers.BatchNormalization()(conv1)
             conv1 = layers.Activation(activation='relu')(conv1)
 
-            conv2 = layers.Conv1D(filters=int(256),kernel_size=int(5), padding='same')(conv1)
+            conv2 = layers.Conv1D(filters=int(256 * self.hyperparameters.filters_multipliers),kernel_size=int(5), padding='same')(conv1)
             conv2 = layers.BatchNormalization()(conv2)
             conv2 = layers.Activation('relu')(conv2)
 
-            conv3 = layers.Conv1D(int(128),kernel_size=int(3), padding='same')(conv2)
+            conv3 = layers.Conv1D(int(128 * self.hyperparameters.filters_multipliers),kernel_size=int(3), padding='same')(conv2)
             conv3 = layers.BatchNormalization()(conv3)
             conv3 = layers.Activation('relu')(conv3)
 

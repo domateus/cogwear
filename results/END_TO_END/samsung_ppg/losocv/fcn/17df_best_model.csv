@@ -1,2 +1,3 @@
-best_model_train_loss,best_model_val_loss,best_model_learning_rate,best_model_nb_epoch
-0.6739683747291565,0.6451133489608765,0.10000000149011612,3
+version https://git-lfs.github.com/spec/v1
+oid sha256:4b64ad6737092f920dbf478d9e3f575f5696dec4d397b0a61946b2fd650e7761
+size 149
