@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:ee96296cfdd9f1172f791921cc2b66cff932a4d54bb2e864052175b65a362c18
-size 61
+precision,recall,duration,f1
+0.0,0.0,0.40338659286499023,0.0

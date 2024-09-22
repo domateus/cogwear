@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:91cc900cfd9b864b66f15976f6835f7ee1bd8cf0b7f4365bbce5c772806b100b
-size 150
+best_model_train_loss,best_model_val_loss,best_model_learning_rate,best_model_nb_epoch
+0.6763802170753479,0.6499674916267395,0.10000000149011612,1

@@ -6,6 +6,7 @@ from src.exception import NoSuchClassifier
 from src.classifiers.hyperparameters import Hyperparameters
 import pandas as pd
 from hyperopt import fmin, tpe, hp, Trials, STATUS_OK, space_eval
+from keras.api.backend import clear_session
 
 def get_search_space(classifier_name):
     result = {}
@@ -70,6 +71,7 @@ class Tuner():
     def _objective(self, x, iteration):
         self.logger.info(f"Running objective for {self.experiment.classifier} at {iteration} iteration")
         hp = get_hyperparameters(self.experiment.classifier, x)
+        clear_session()
         _, loss = self.experiment.run_once(hp, percentage_data=.2)
 
         return {"status": STATUS_OK,
