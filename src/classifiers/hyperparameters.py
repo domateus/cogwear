@@ -15,6 +15,7 @@ class Hyperparameters():
         self.reduce_lr_factor = reduce_lr_factor
         self.reduce_lr_patience = reduce_lr_patience
         self.class_weights = {0: 1*baseline_weight, 1: 1}
+        # self.class_weights = {0: 1, 1: 1}
 
 
     def dict(self):
