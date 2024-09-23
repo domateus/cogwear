@@ -1,6 +1,8 @@
 import os
 import pickle
 
+import tensorflow as tf
+
 from src.experiments.experiment import Experiment
 from src.exception import NoSuchClassifier
 from src.classifiers.hyperparameters import Hyperparameters
@@ -11,7 +13,7 @@ from keras.api.backend import clear_session
 def get_search_space(classifier_name):
     result = {}
     optimizer_subspace = [hp.randint("lr_power", 1, 7), hp.choice("decay", [.001, .0001, .00001, 0]),
-                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [16, 32, 64, 128, 256]), hp.randint("epochs", 80, 100), hp.randint("baseline_weight", 2, 4)]
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [8, 16, 32]), hp.randint("epochs", 80, 100), hp.randint("baseline_weight", 2, 4)]
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
@@ -19,11 +21,11 @@ def get_search_space(classifier_name):
     result["cnn"] = space
     result["fcn"] = space
 
-    result["lstm"] = (optimizer_subspace, subspace1, subspace2,hp.choice(f"lstm_units", [2]))
+    result["lstm"] = (optimizer_subspace, subspace1, subspace2,hp.choice(f"lstm_units", [1, 2, 3, 4]))
 
-    subspace1 = [hp.choice("filters", [32, 64, 128])]
+    subspace1 = [hp.choice("filters", [16, 32, 64])]
     subspace2 = [hp.choice("kernel_size_multiplier", [1, 2, 4])]
-    result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3, 4]), subspace1, subspace2)
+    result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3]), subspace1, subspace2)
 
     return result[classifier_name]
 
@@ -54,12 +56,13 @@ class Tuner():
         self.trial_path = experiment.trials_path
         os.makedirs(self.trial_path, exist_ok=True)
 
-    def tune(self, max_evals):
+    def tune(self, evals, max_evals):
         trials = self.load_trials()
         start = len(trials)
+        finish = min(start + evals, max_evals)
         self.logger.info(f"trials length: {len(trials)}")
         space = get_search_space(self.experiment.classifier)
-        for i in range(start, max_evals):
+        for i in range(start, finish):
             fmin(fn=lambda x: self._objective(x, i),
                  space=space,
                  algo=tpe.suggest,
@@ -72,8 +75,10 @@ class Tuner():
     def _objective(self, x, iteration):
         self.logger.info(f"Running objective for {self.experiment.classifier} at {iteration} iteration")
         hp = get_hyperparameters(self.experiment.classifier, x)
-        clear_session()
-        _, loss = self.experiment.run_once(hp, percentage_data=.2)
+        with tf.device('/device:GPU:0'):
+            clear_session()
+            _, loss = self.experiment.run_once(hp, percentage_data=.2)
+            clear_session()
 
         return {"status": STATUS_OK,
                 "x": hp.dict(),
