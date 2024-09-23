@@ -89,17 +89,20 @@ class Experiment(ABC):
         os.makedirs(self.test_path, exist_ok=True)
         x = np.concatenate([s.x for s in self.test_subjects])
         y = np.concatenate([s.y for s in self.test_subjects])
+        if len(x.shape) > 3:
+            x = [*x.swapaxes(0,1)]
         if len(tuner.load_trials()) == 0:
             tuner.tune(1)
         hyperparameters = tuner.best_hyperparameters()
         best_models = [f for f in os.listdir(self.losocv_path) if 'best_model.weights' in f]
         results = {}
-        print(f"x: {x.shape}")
+        print(f"x: {np.shape(x)}")
         print(f"y: {y.shape}")
         for model in best_models:
             fold_id = model[0:2]
             classifier = create_classifier(classifier_name=self.classifier, output_directory=self.test_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=fold_id)
             print(f"model path: {os.path.join(self.losocv_path, model)}")
+
             metrics = classifier.predict(x, y, os.path.join(self.losocv_path, model))
             results[fold_id] = metrics
         return results
