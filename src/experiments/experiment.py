@@ -10,6 +10,7 @@ import numpy as np
 from src.logger import  logger
 from enum import Enum
 from src.classifiers.hyperparameters import Hyperparameters
+from keras.api.backend import clear_session
 
 class ExperimentType(Enum):
     END_TO_END = 0
@@ -62,28 +63,33 @@ class Experiment(ABC):
 
         return metrics, loss
 
-    def losocv_run(self, tuner):
+    def losocv_run_once(self, tuner, fold_index):
         # Generate at least once the hyperparmeters
         if len(tuner.load_trials()) == 0:
             tuner.tune(1)
         hyperparameters = tuner.best_hyperparameters()
-        for fold in self.splits:
-            x_train, y_train, x_test, y_test, x_val, y_val = fold.x_train(), fold.y_train(), fold.x_test(), fold.y_test(), fold.x_val(), fold.y_val()
+        fold = self.splits[fold_index]
+        clear_session()
+        x_train, y_train, x_test, y_test, x_val, y_val = fold.x_train(), fold.y_train(), fold.x_test(), fold.y_test(), fold.x_val(), fold.y_val()
 
-            # x_train, y_train, x_test, y_test, x_val, y_val = self._partial(fold.x_train(), 0.6), self._partial(fold.y_train(),0.6), self._partial(fold.x_test(),0.6), self._partial(fold.y_test(),0.6), self._partial(fold.x_val(),0.6),self._partial(fold.y_val(),0.6) 
+        # x_train, y_train, x_test, y_test, x_val, y_val = self._partial(fold.x_train(), 0.6), self._partial(fold.y_train(),0.6), self._partial(fold.x_test(),0.6), self._partial(fold.y_test(),0.6), self._partial(fold.x_val(),0.6),self._partial(fold.y_val(),0.6) 
 
-            if len(self.shape) > 2:
-                x_train = [*x_train.swapaxes(0,1)]
-                x_test = [*x_test.swapaxes(0,1)]
-                x_val = [*x_val.swapaxes(0,1)]
+        if len(self.shape) > 2:
+            x_train = [*x_train.swapaxes(0,1)]
+            x_test = [*x_test.swapaxes(0,1)]
+            x_val = [*x_val.swapaxes(0,1)]
 
-            classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=fold.id)
+        classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=fold.id)
 
-            metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
-                           batch_size=hyperparameters.batch_size)
+        metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
+                       batch_size=hyperparameters.batch_size)
 
 
-            self.logger.info(f"Fold: {fold.id} => loss: {loss}")
+        self.logger.info(f"Fold: {fold.id} => loss: {loss}")
+
+    def losocv_run(self, tuner):
+        for i in range (0, len(self.splits)):
+            self.losocv_run_once(tuner, i);
 
     def test_best_models(self, tuner):
         os.makedirs(self.test_path, exist_ok=True)

@@ -1,3 +1,4 @@
+from math import log10
 import os
 import pickle
 
@@ -42,7 +43,30 @@ def get_hyperparameters(classifier, x):
                                kernel_size_multiplier=x[3][0])
     raise NoSuchClassifier(classifier)
 
-def best_trial_hyperparameter(classifier, trials):
+def best_trial_hyperparameter(trials):
+    trial = trials.best_trial['result']['x']
+    filters_multipliers = trial['filters_multipliers']
+    filters = trial[ 'filters' ]
+    kernel_size_multiplier = trial[ 'kernel_size_multiplier' ]
+    kernel_sizes = trial[ 'kernel_sizes' ]
+    dense_outputs = trial[ 'dense_outputs' ]
+    depth = trial[ 'depth' ]
+    lstm_units = trial[ 'lstm_units' ]
+    batch_size = trial[ 'batch_size' ]
+    epochs = trial[ 'epochs' ]
+    lr = trial[ 'lr' ]
+    print(f"lr: {lr}")
+    lr_power = log10(1 / lr)
+    print(f"lr_power: {lr_power}")
+    decay = trial[ 'decay' ]
+    reduce_lr_factor = trial[ 'reduce_lr_factor' ]
+    reduce_lr_patience = trial[ 'reduce_lr_patience' ]
+    class_weights = trial[ 'class_weights' ]
+    baseline_weight = class_weights[0]
+    return Hyperparameters(lr_power, decay, reduce_lr_factor, reduce_lr_patience, batch_size, epochs, filters_multipliers, filters, kernel_size_multiplier, kernel_sizes, dense_outputs, depth, lstm_units, baseline_weight)
+
+
+def best_trial_hyperparameter_2(classifier, trials):
     best = {}
     for key in trials.best_trial['misc']['vals']:
       best[key] = trials.best_trial['misc']['vals'][key][0]
@@ -69,7 +93,8 @@ class Tuner():
                  max_evals=i + 1,
                  trials=trials)
 
-        self.save_trials(trials)
+            # Moved into the loop due to preemptible gpu
+            self.save_trials(trials)
         return trials
 
     def _objective(self, x, iteration):
@@ -85,7 +110,7 @@ class Tuner():
                 "loss": loss}
             
     def best_hyperparameters(self):
-        return best_trial_hyperparameter(self.experiment.classifier, self.load_trials())
+        return best_trial_hyperparameter(self.load_trials())
 
     def load_trials(self):
         trials_filename = os.path.join(self.trial_path, self.experiment.classifier + ".pkl")

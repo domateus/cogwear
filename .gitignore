@@ -5,3 +5,4 @@ cogwear/
 __pycache__/
 survey_gamification.zip
 vvv/**
+*.zip
