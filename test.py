@@ -1,7 +1,7 @@
 import os
 import pickle
 
-path = f"{os.getcwd()}/results/END_TO_END/muse_eeg/trials/resnet/resnet.pkl"
+path = f"{os.getcwd()}/results/END_TO_END/empatica_ppg/trials/cnn/cnn.pkl"
 trials = {}
 try:
     if os.path.exists(path):
