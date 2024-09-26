@@ -56,4 +56,4 @@ class Subject(ABC):
         return 64 if sensor == "ppg" else 4
 
     def load(self):
-        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))
+        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv")).dropna()
