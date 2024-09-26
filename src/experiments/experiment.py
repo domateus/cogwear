@@ -17,7 +17,7 @@ class ExperimentType(Enum):
     FEATURE_ENGINEERING = 1
 
 class Experiment(ABC):
-    def __init__(self, signal: str, classifier: str, type: ExperimentType, path: str, device:str, subject=Subject):
+    def __init__(self, signal: str, classifier: str, type: ExperimentType, path: str, device:str, subject=Subject, window_duration=30):
         self._tuning_iteration = 0
         self.logger = logger
         self.signal = signal
@@ -26,13 +26,14 @@ class Experiment(ABC):
         self.path = path
         self.data_path = os.path.join(path, 'survey_gamification')
         self.device = device
-        self.trials_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "trials", self.classifier)
-        self.losocv_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "losocv", self.classifier)
-        self.test_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
-        self.test_metrics_path =  os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "test")
-        self.analysis_path = os.path.join(path, "results", self.type.name, f"{self.device}_{self.signal}", "analysis")
-        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg") for id in SUBJECTS_IDS]
-        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg") for id in TEST_SUBJECT_IDS]
+        results_folder_name = f'results_{window_duration}'
+        self.trials_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "trials", self.classifier)
+        self.losocv_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "losocv", self.classifier)
+        self.test_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
+        self.test_metrics_path =  os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test")
+        self.analysis_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "analysis")
+        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in SUBJECTS_IDS]
+        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in TEST_SUBJECT_IDS]
         self.splits: list[Split] = []
         for split in losocv_splits():
             self.splits.append(split.into(self.subjects))

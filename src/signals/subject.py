@@ -7,20 +7,19 @@ import pandas as pd
 from src.signals.signal import Signal
 
 class Subject(ABC):
-    def __init__(self, path: str, id: str, device: str, sensor: str):
+    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30):
         self.path = path
         self.device = device
         self.sampling = Subject.get_device_sampling(device, sensor)
         self.sensor = sensor
         self.id = id
         self._data = self.load()
-        discard_time = 4 * self.sampling
-        self._x = self._get_signal(discard_time)
-        self._y = self._data["y"][discard_time:-discard_time]
-        self.x, self.y = self.values()
+        self._x = self._get_signal()
+        self._y = self._data["y"]
+        self.x, self.y = self.values(seconds=window_duration)
 
-    def _get_signal(self, discard_time):
-        return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor][discard_time:-discard_time]])
+    def _get_signal(self):
+        return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor]])
 
     def _get_window(self, index=0, seconds=30, overlap_ratio=0.5):
         window_size = seconds * self._x.sampling
@@ -56,4 +55,4 @@ class Subject(ABC):
         return 64 if sensor == "ppg" else 4
 
     def load(self):
-        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv")).dropna()
+        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))

@@ -9,8 +9,8 @@ class EEGSubject(Subject):
 
         Subject.__init__(self, path=path, id=id, device="muse", sensor="eeg")
 
-    def _get_signal(self, discard_time):
-        data = [self._data[col][discard_time:-discard_time] for col in self._eeg_cols]
+    def _get_signal(self):
+        data = [self._data[col] for col in self._eeg_cols]
         return Signal(self.sensor, self.sensor, self.sampling, data)
 
     def _expand_dims_axis(self): # pyright: ignore[reportIncompatibleMethodOverride]
