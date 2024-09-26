@@ -66,14 +66,14 @@ def losocv_splits() -> list[Split.Pre]:
 
 def create_classifier(classifier_name, input_shape, output_directory, hyperparameters, fold) -> Classifier:
     if classifier_name == 'fcn':
-        return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'cnn':
-        return Cnn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Cnn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'lstm':
-        return Lstm(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Lstm(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'resnet':
-        return OneDResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
-    return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return OneDResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
+    return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
 
 
 def wipe_results():

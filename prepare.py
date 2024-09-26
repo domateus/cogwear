@@ -1,4 +1,4 @@
-from src.data_prepare import prepare_data, join_ys, rename_ppg_sensor
+from src.data_prepare import prepare_data
 import os 
 
 survey_path = "{0}/survey_gamification".format(os.getcwd())

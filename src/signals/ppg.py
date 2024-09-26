@@ -20,8 +20,8 @@ class PPG():
         print(path)
 
 class PPGExperiment(Experiment):
-    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung"):
-        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path)
+    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30):
+        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration)
         self.device = device
         self.path = path
 
