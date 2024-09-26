@@ -6,7 +6,7 @@ from src.signals.eeg import EEGSubject
 import os
 from keras.api.backend import clear_session
 
-classifiers = ['cnn']
+classifiers = ['fcn']
 path = os.getcwd()
 
 for c in classifiers:
@@ -16,8 +16,8 @@ for c in classifiers:
   tuner = Tuner(exp)
   # tuner.tune(evals=10, max_evals=40)
   # clear_session()
-  # exp.losocv_run(tuner)
-  # clear_session()
+  exp.losocv_run(tuner)
+  clear_session()
   exp.test_best_models(tuner)
 
   # exp = EDAExperiment(classifier=c, type=ExperimentType.END_TO_END, path=path)
