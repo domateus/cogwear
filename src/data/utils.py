@@ -14,6 +14,10 @@ SUBJECTS_IDS = list(it.chain(range(11, 19), range(20, 25)))
 LOSOCV_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(0, 10)]
 TEST_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(10, 13)]
 
+SUBJECTS_IDS_PILOT = list(it.chain(range(0, 11)))
+LOSOCV_SUBJECT_IDS_PILOT = [SUBJECTS_IDS_PILOT[i] for i in range(0, 10)]
+TEST_SUBJECT_IDS_PILOT = [SUBJECTS_IDS_PILOT[10]]
+
 class Split():
     def __init__(self, id, train, test, val):
         self.id = id
@@ -53,11 +57,12 @@ class Split():
             val = [s for s in subjects if s.id in self.val]
             return Split(self.id, train, test, val)
 
-def losocv_splits() -> list[Split.Pre]:
+def losocv_splits(pilot=False) -> list[Split.Pre]:
     result = []
-    for subject in LOSOCV_SUBJECT_IDS:
+    subjects = LOSOCV_SUBJECT_IDS if not pilot else LOSOCV_SUBJECT_IDS_PILOT
+    for subject in subjects:
         test_set = [f"{subject}"]
-        rest = [f"{x}" for x in LOSOCV_SUBJECT_IDS if not x == subject]
+        rest = [f"{x}" for x in subjects if not x == subject]
         val_set = random.sample(rest, 1)
         train_set = [x for x in rest if x not in val_set]
         result.append(Split.Pre(id=subject, train=train_set, test=test_set, val=val_set))

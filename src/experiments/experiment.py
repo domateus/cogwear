@@ -1,7 +1,7 @@
 import pandas as pd
 from math import ceil
 from random import randrange
-from src.data.utils import TEST_SUBJECT_IDS, Split, create_classifier,losocv_splits
+from src.data.utils import SUBJECTS_IDS_PILOT, TEST_SUBJECT_IDS, TEST_SUBJECT_IDS_PILOT, Split, create_classifier,losocv_splits
 from abc import ABC
 from src.data.utils import SUBJECTS_IDS
 from src.signals.subject import Subject
@@ -17,7 +17,7 @@ class ExperimentType(Enum):
     FEATURE_ENGINEERING = 1
 
 class Experiment(ABC):
-    def __init__(self, signal: str, classifier: str, type: ExperimentType, path: str, device:str, subject=Subject, window_duration=30):
+    def __init__(self, signal: str, classifier: str, type: ExperimentType, path: str, device:str, subject=Subject, window_duration=30, pilot=False):
         self._tuning_iteration = 0
         self.logger = logger
         self.signal = signal
@@ -25,6 +25,12 @@ class Experiment(ABC):
         self.classifier = classifier
         self.path = path
         self.data_path = os.path.join(path, 'survey_gamification')
+        subjects = SUBJECTS_IDS
+        test_subjects = TEST_SUBJECT_IDS
+        if pilot:
+            self.data_path = os.path.join(path, 'pilot')
+            subjects = SUBJECTS_IDS_PILOT
+            test_subjects = TEST_SUBJECT_IDS_PILOT
         self.device = device
         results_folder_name = f'results_{window_duration}'
         self.trials_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "trials", self.classifier)
@@ -32,10 +38,10 @@ class Experiment(ABC):
         self.test_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
         self.test_metrics_path =  os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test")
         self.analysis_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "analysis")
-        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in SUBJECTS_IDS]
-        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in TEST_SUBJECT_IDS]
+        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in subjects]
+        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in test_subjects]
         self.splits: list[Split] = []
-        for split in losocv_splits():
+        for split in losocv_splits(pilot):
             self.splits.append(split.into(self.subjects))
         self.shape = self.splits[0].x_val().shape[1:]
 

@@ -6,17 +6,18 @@ from src.signals.eeg import EEGSubject
 import os
 from keras.api.backend import clear_session
 
-classifiers = ['lstm']
+classifiers = ['resnet']
 path = os.getcwd()
 
 for c in classifiers:
   print(c)
   clear_session()
-  exp = PPGExperiment(classifier=c, type=ExperimentType.END_TO_END, path=path, device='samsung', window_duration=30)
+  exp = PPGExperiment(classifier=c, type=ExperimentType.END_TO_END, path=path, device='samsung', window_duration=10)
   tuner = Tuner(exp)
-  # tuner.tune(evals=10, max_evals=40)
+  # tuner.tune(evals=40, max_evals=40)
   # clear_session()
   exp.losocv_run(tuner)
+  # exp.losocv_run_once(tuner, 9)
   clear_session()
   exp.test_best_models(tuner)
 

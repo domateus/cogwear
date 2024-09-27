@@ -41,21 +41,25 @@ def get_remove_window_size(filename: str) -> int:
 
 files = ['samsung_bvp.csv', 'empatica_bvp.csv', 'empatica_eda.csv', 'muse_eeg.csv']
 def df(source_path, subject, day, label, file):
-  path = os.path.join(source_path, subject, day, label, file)
+  path = ''
+  if day is None:
+    path = os.path.join(source_path, subject, label, file)
+  else:
+    path = os.path.join(source_path, subject, day, label, file)
   if os.path.exists(path):
     return pd.read_csv(path)
   return pd.DataFrame()
 
-def merge_files(path):
+def merge_files(path, pilot=False):
   print(f'merging files at: {path}')
   for subject in os.listdir(path):
     print(f'  SUBJECT: {subject}')
     for file in files:
       start_time = time()
-      pre_baseline = df(path, subject, 'pre', 'baseline', file)
-      pre_cl = df(path, subject, 'pre', 'cognitive_load', file)
-      post_baseline = df(path, subject, 'post', 'baseline', file)
-      post_cl = df(path, subject, 'post', 'cognitive_load', file)
+      pre_baseline = df(path, subject, 'pre' if not pilot else None, 'baseline', file)
+      pre_cl = df(path, subject, 'pre' if not pilot else None, 'cognitive_load', file)
+      post_baseline = df(path, subject, 'post' if not pilot else None, 'baseline', file)
+      post_cl = df(path, subject, 'post' if not pilot else None, 'cognitive_load', file)
 
       # given that the experiment start with the baseline measurement and ends with the cognitive load
       # the beggining of the baseline is removed and the end of cognitive load is removed
@@ -95,9 +99,9 @@ def merge_files(path):
     if os.path.exists(os.path.join(path, subject, 'post')):
       shutil.rmtree(os.path.join(path, subject, 'post'))
 
-def prepare_data(path):
+def prepare_data(path, pilot=False):
   print("remove survey measurements")
   remove_survey_measurements(path)
   print("remove unused files")
   remove_unused_files_recursive(path)
-  merge_files(path)
+  merge_files(path, pilot)
