@@ -26,10 +26,10 @@ class Lstm(Classifier):
             assert filters_multipliers is not None
             assert kernel_size_multipliers is not None
 
-            filters_1 = int(filters_multipliers * 2)
-            filters_2 = int(filters_multipliers * 4)
-            kernel_size_1 = int(kernel_size_multipliers * 2)
-            kernel_size_2 = int(kernel_size_multipliers * 4)
+            filters_1 = int(filters_multipliers * 8)
+            filters_2 = int(filters_multipliers * 16)
+            kernel_size_1 = int(kernel_size_multipliers * 8)
+            kernel_size_2 = int(kernel_size_multipliers * 16)
 
             # length of convolution window (kernel size) cannot be larger than number of steps
             conv_layer = layers.Conv1D(filters=filters_1, kernel_size=kernel_size_1)(input_layer)

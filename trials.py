@@ -6,7 +6,7 @@ from src.signals.eeg import EEGSubject
 import os
 from keras.api.backend import clear_session
 
-classifiers = ['fcn']
+classifiers = ['lstm']
 path = os.getcwd()
 
 for c in classifiers:

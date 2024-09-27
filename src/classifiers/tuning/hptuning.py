@@ -13,11 +13,11 @@ from keras.api.backend import clear_session
 
 def get_search_space(classifier_name):
     result = {}
-    optimizer_subspace = [hp.randint("lr_power", 2, 5), hp.choice("decay", [.001, .0001, .00001, 0]),
-                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [2, 4, 8, 16, 32]), hp.randint("epochs", 80, 100), hp.randint("baseline_weight", 2, 4)]
+    optimizer_subspace = [hp.randint("lr_power", 3, 6), hp.choice("decay", [.001, .0001, .00001, 0]),
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [2, 4, 8, 16, 32]), hp.randint("epochs", 90, 100), hp.randint("baseline_weight", 2, 4)]
 
-    subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
-    subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
+    subspace1 = hp.choice(f"filters_multiplier", [0.2, 0.5, 1, 2, 4])
+    subspace2 = hp.choice(f"kernel_size_multiplier", [0.2, 0.5, 1, 2, 4])
     space = (optimizer_subspace, subspace1, subspace2)
     result["cnn"] = space
     result["fcn"] = space
