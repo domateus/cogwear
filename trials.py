@@ -12,7 +12,7 @@ path = os.getcwd()
 for c in classifiers:
   print(c)
   clear_session()
-  exp = PPGExperiment(classifier=c, type=ExperimentType.END_TO_END, path=path, device='samsung', window_duration=10)
+  exp = PPGExperiment(classifier=c, type=ExperimentType.END_TO_END, path=path, device='samsung', window_duration=60)
   tuner = Tuner(exp)
   # tuner.tune(evals=10, max_evals=40)
   # clear_session()
