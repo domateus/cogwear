@@ -26,10 +26,10 @@ class Lstm(Classifier):
             assert filters_multipliers is not None
             assert kernel_size_multipliers is not None
 
-            filters_1 = int(filters_multipliers * 8)
-            filters_2 = int(filters_multipliers * 16)
-            kernel_size_1 = int(kernel_size_multipliers * 8)
-            kernel_size_2 = int(kernel_size_multipliers * 16)
+            filters_1 = int(filters_multipliers * 4)
+            filters_2 = int(filters_multipliers * 8)
+            kernel_size_1 = int(kernel_size_multipliers * 4)
+            kernel_size_2 = int(kernel_size_multipliers * 8)
 
             # length of convolution window (kernel size) cannot be larger than number of steps
             conv_layer = layers.Conv1D(filters=filters_1, kernel_size=kernel_size_1)(input_layer)
@@ -38,11 +38,6 @@ class Lstm(Classifier):
             conv_layer = layers.MaxPooling1D(pool_size=2)(conv_layer)
 
             output_layers.append(conv_layer)
-
-            # flatten_layer = layers.TimeDistributed(layers.Flatten())(conv_layer)
-            # dense_layer = layers.TimeDistributed(layers.Dense(lstm_units))(flatten_layer)
-            # lstm_layer = layers.LSTM(lstm_units)(dense_layer)
-            # output_layers.append(lstm_layer)
 
         concat = layers.concatenate(output_layers, axis=-1) if len(output_layers) > 1 else output_layers[0]
         flatten_layer = layers.TimeDistributed(layers.Flatten())(concat)
