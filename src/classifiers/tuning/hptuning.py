@@ -55,10 +55,9 @@ def best_trial_hyperparameter(trials):
     lr_power = log10(1 / lr)
     decay = trial[ 'decay' ]
     reduce_lr_factor = trial[ 'reduce_lr_factor' ]
-    reduce_lr_patience = trial[ 'reduce_lr_patience' ]
     class_weights = trial[ 'class_weights' ]
     baseline_weight = class_weights[0]
-    return Hyperparameters(lr_power, decay, reduce_lr_factor, reduce_lr_patience, batch_size, filters_multipliers, filters, kernel_size_multiplier, kernel_sizes, dense_outputs, depth, lstm_units, baseline_weight)
+    return Hyperparameters(lr_power, decay, reduce_lr_factor, batch_size, filters_multipliers, filters, kernel_size_multiplier, kernel_sizes, dense_outputs, depth, lstm_units, baseline_weight)
 
 
 def best_trial_hyperparameter_2(classifier, trials):
