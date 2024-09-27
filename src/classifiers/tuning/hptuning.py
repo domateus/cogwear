@@ -13,8 +13,8 @@ from keras.api.backend import clear_session
 
 def get_search_space(classifier_name):
     result = {}
-    optimizer_subspace = [hp.randint("lr_power", 2, 5), hp.choice("decay", [.001, .0001, .00001, 0]),
-                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("reduce_lr_patience", [5, 10]), hp.choice("batch_size", [2, 4, 8, 16, 32]), hp.randint("epochs", 90, 100), hp.randint("baseline_weight", 2, 4)]
+    optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.01, .001, .0001, .00001]),
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("batch_size", [2, 4, 8, 16, 32]), hp.randint("baseline_weight", 2, 3)]
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
@@ -22,25 +22,23 @@ def get_search_space(classifier_name):
     result["cnn"] = space
     result["fcn"] = space
 
-    result["lstm"] = (optimizer_subspace, subspace1, subspace2,hp.choice(f"lstm_units", [1, 2, 3, 4]))
+    result["lstm"] = (optimizer_subspace, subspace1, subspace2,hp.choice(f"lstm_units", [1, 2, 3]))
 
     subspace1 = [hp.choice("filters", [16, 32, 64])]
     subspace2 = [hp.choice("kernel_size_multiplier", [1, 2, 4])]
-    result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3]), subspace1, subspace2)
+    result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3, 4]), subspace1, subspace2)
 
     return result[classifier_name]
 
 def get_hyperparameters(classifier, x):
-    lr, decay, reduce_lr_factor, reduce_lr_patience, batch_size, epochs, baseline_weight = x[0]
+    lr, decay, reduce_lr_factor, batch_size, baseline_weight = x[0]
 
     if classifier in ["cnn", "fcn"]:
-        return Hyperparameters(lr, decay, reduce_lr_factor, reduce_lr_patience, batch_size, epochs, filters_multipliers=x[1],
-                               kernel_size_multiplier=x[2], baseline_weight=baseline_weight)
+        return Hyperparameters(lr, decay, reduce_lr_factor,  batch_size, filters_multipliers=x[1], kernel_size_multiplier=x[2], baseline_weight=baseline_weight)
     if classifier == "lstm":
-        return Hyperparameters(lr, decay, reduce_lr_factor, reduce_lr_patience,batch_size, epochs, filters_multipliers=x[1], kernel_size_multiplier=x[2], lstm_units=x[3])
+        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, filters_multipliers=x[1], kernel_size_multiplier=x[2], lstm_units=x[3])
     if classifier == "resnet":
-        return Hyperparameters(lr, decay, reduce_lr_factor, reduce_lr_patience,batch_size, epochs, depth=x[1], filters=x[2][0],
-                               kernel_size_multiplier=x[3][0])
+        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, depth=x[1], filters=x[2][0], kernel_size_multiplier=x[3][0])
     raise NoSuchClassifier(classifier)
 
 def best_trial_hyperparameter(trials):
@@ -53,17 +51,14 @@ def best_trial_hyperparameter(trials):
     depth = trial[ 'depth' ]
     lstm_units = trial[ 'lstm_units' ]
     batch_size = trial[ 'batch_size' ]
-    epochs = trial[ 'epochs' ]
     lr = trial[ 'lr' ]
-    print(f"lr: {lr}")
     lr_power = log10(1 / lr)
-    print(f"lr_power: {lr_power}")
     decay = trial[ 'decay' ]
     reduce_lr_factor = trial[ 'reduce_lr_factor' ]
     reduce_lr_patience = trial[ 'reduce_lr_patience' ]
     class_weights = trial[ 'class_weights' ]
     baseline_weight = class_weights[0]
-    return Hyperparameters(lr_power, decay, reduce_lr_factor, reduce_lr_patience, batch_size, epochs, filters_multipliers, filters, kernel_size_multiplier, kernel_sizes, dense_outputs, depth, lstm_units, baseline_weight)
+    return Hyperparameters(lr_power, decay, reduce_lr_factor, reduce_lr_patience, batch_size, filters_multipliers, filters, kernel_size_multiplier, kernel_sizes, dense_outputs, depth, lstm_units, baseline_weight)
 
 
 def best_trial_hyperparameter_2(classifier, trials):

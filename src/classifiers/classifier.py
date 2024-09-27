@@ -32,11 +32,11 @@ class Classifier(ABC):
         self.callbacks.append(model_checkpoint)
         reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=self.hyperparameters.reduce_lr_factor, patience=self.hyperparameters.reduce_lr_patience)
         self.callbacks.append(reduce_lr)
-        early_stopping = callbacks.EarlyStopping(patience=15)
+        early_stopping = callbacks.EarlyStopping(patience=30)
         self.callbacks.append(early_stopping)
 
     def get_optimizer(self):
-        return optimizers.Adam(clipnorm=1, learning_rate=self.hyperparameters.lr, weight_decay=self.hyperparameters.decay)
+        return optimizers.AdamW(learning_rate=self.hyperparameters.lr, weight_decay=self.hyperparameters.decay)
 
     def fit(self, x_train, y_train, x_val, y_val, y_true, batch_size=16, nb_epochs=500, x_test=None, shuffle=True):
         mini_batch_size = int(min(x_train[0].shape[0] / 10, batch_size))
