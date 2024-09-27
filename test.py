@@ -1,7 +1,7 @@
 import os
 import pickle
 
-path = f"{os.getcwd()}/results/END_TO_END/empatica_ppg/trials/cnn/cnn.pkl"
+path = f"{os.getcwd()}/results_30/END_TO_END/samsung_ppg/trials/resnet/resnet.pkl"
 trials = {}
 try:
     if os.path.exists(path):
@@ -11,3 +11,4 @@ except EOFError:
     pass
 
 len(trials)
+print(trials.best_trial['result']['x'])
