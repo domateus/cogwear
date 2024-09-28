@@ -5,10 +5,11 @@ from abc import ABC
 from math import floor
 import os
 import pandas as pd
+from src.experiments.consts import ExperimentType
 from src.signals.signal import Signal
 
 class Subject(ABC):
-    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30):
+    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30, experiment_type=ExperimentType.END_TO_END):
         self.path = path
         self.device = device
         self.sampling = Subject.get_device_sampling(device, sensor)
@@ -17,7 +18,24 @@ class Subject(ABC):
         self._data = self.load()
         self._x = self._get_signal()
         self._y = self._data["y"]
-        self.x, self.y = self.values(seconds=window_duration)
+        self.experiment_type = experiment_type
+        self._computed_x = []
+        self._computed_y = []
+
+    def x(self):
+        if len(self._computed_x) > 0:
+            return self._computed_x
+        if ExperimentType.END_TO_END == self.experiment_type:
+            self._computed_x, self._computed_y = self.values()
+        return self._computed_x
+
+    def y(self):
+        if len(self._computed_y) > 0:
+            return self._computed_y
+        if ExperimentType.END_TO_END == self.experiment_type:
+            self._computed_x, self._computed_y = self.values()
+        return self._computed_y
+
 
     def _get_signal(self):
         return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor]])

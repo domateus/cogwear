@@ -1,4 +1,5 @@
-from src.experiments.experiment import Experiment, ExperimentType
+from src.experiments.experiment import Experiment
+from src.experiments.consts import  ExperimentType
 
 class EDAExperiment(Experiment):
     def __init__(self, path: str, type: ExperimentType, classifier: str, window_duration=30, pilot=False):

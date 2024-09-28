@@ -26,22 +26,22 @@ class Split():
         self.val = val
 
     def x_train(self):
-        return np.concatenate([s.x for s in self.train])
+        return np.concatenate([s.x() for s in self.train])
 
     def y_train(self):
-        return np.concatenate([s.y for s in self.train])
+        return np.concatenate([s.y() for s in self.train])
 
     def x_test(self):
-        return np.concatenate([s.x for s in self.test])
+        return np.concatenate([s.x() for s in self.test])
 
     def y_test(self):
-        return np.concatenate([s.y for s in self.test])
+        return np.concatenate([s.y() for s in self.test])
 
     def x_val(self):
-        return np.concatenate([s.x for s in self.val])
+        return np.concatenate([s.x() for s in self.val])
 
     def y_val(self):
-        return np.concatenate([s.y for s in self.val])
+        return np.concatenate([s.y() for s in self.val])
 
 
     class Pre():

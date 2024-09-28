@@ -11,10 +11,8 @@ from src.logger import  logger
 from enum import Enum
 from src.classifiers.hyperparameters import Hyperparameters
 from keras.api.backend import clear_session
+from src.experiments.consts import ExperimentType
 
-class ExperimentType(Enum):
-    END_TO_END = 0
-    FEATURE_ENGINEERING = 1
 
 class Experiment(ABC):
     def __init__(self, signal: str, classifier: str, type: ExperimentType, path: str, device:str, subject=Subject, window_duration=30, pilot=False):
@@ -38,12 +36,13 @@ class Experiment(ABC):
         self.test_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
         self.test_metrics_path =  os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test")
         self.analysis_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "analysis")
-        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration) for id in subjects]
-        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration) for id in test_subjects]
+        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration, experiment_type=type) for id in subjects]
+        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration, experiment_type=type) for id in test_subjects]
         self.splits: list[Split] = []
         for split in losocv_splits(pilot):
             self.splits.append(split.into(self.subjects))
-        self.shape = self.splits[0].x_val().shape[1:]
+        if ExperimentType.END_TO_END == type:
+            self.shape = self.splits[0].x_val().shape[1:]
 
 
     def run_once(self, hyperparameters: Hyperparameters, percentage_data=1.):
@@ -79,7 +78,6 @@ class Experiment(ABC):
         clear_session()
         x_train, y_train, x_test, y_test, x_val, y_val = fold.x_train(), fold.y_train(), fold.x_test(), fold.y_test(), fold.x_val(), fold.y_val()
 
-        # x_train, y_train, x_test, y_test, x_val, y_val = self._partial(fold.x_train(), 0.6), self._partial(fold.y_train(),0.6), self._partial(fold.x_test(),0.6), self._partial(fold.y_test(),0.6), self._partial(fold.x_val(),0.6),self._partial(fold.y_val(),0.6) 
 
         if len(self.shape) > 2:
             x_train = [*x_train.swapaxes(0,1)]
@@ -100,8 +98,8 @@ class Experiment(ABC):
 
     def test_best_models(self, tuner):
         os.makedirs(self.test_path, exist_ok=True)
-        x = np.concatenate([s.x for s in self.test_subjects])
-        y = np.concatenate([s.y for s in self.test_subjects])
+        x = np.concatenate([s.x() for s in self.test_subjects])
+        y = np.concatenate([s.y() for s in self.test_subjects])
         if len(x.shape) > 3:
             x = [*x.swapaxes(0,1)]
         if len(tuner.load_trials()) == 0:

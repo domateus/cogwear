@@ -8,34 +8,214 @@ import scipy.stats as stats
 import scipy.signal as sig
 import os
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 from src.classifiers.classifier import Classifier
 from src.data.utils import LOSOCV_SUBJECT_IDS, SUBJECTS_IDS, TEST_SUBJECT_IDS, losocv_splits
 from src.signals.subject import Subject
 from src.signals.utils import filter_signal
 from src.signals.signal import Signal
-from src.experiments.experiment import Experiment, ExperimentType
-
-class PPG():
-    def __init__(self, path):
-        print(path)
+from src.experiments.consts import  ExperimentType
+from src.experiments.experiment import Experiment
 
 class PPGExperiment(Experiment):
     def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30, pilot=False):
-        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, pilot=pilot)
+        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, pilot=pilot, subject=PPGSubject)
         self.device = device
         self.path = path
 
-
 class PPGSubject(Subject):
-    def __init__(self, path, subject_id, sensor, device):
-        Subject.__init__(self, path=path, id=subject_id, device=device, sensor=sensor)
-        self._filtered = self.filtered(self._data['ppg'])
+    def __init__(self, path, id, sensor, device, experiment_type, window_duration=30):
+        Subject.__init__(self, path=path, id=id, device=device, sensor=sensor, experiment_type=experiment_type)
+        self._filtered = self.filtered(self._data['ppg'], [0.1, 9], 2)
+        self._peaks = self.peaks(self._filtered)
+        self._peak_label = [self._data['y'][p] for p in self._peaks]
+        self._bpm = self.bpm()
+        self._ibi = self.ibi()
+        self._mean_bpm = self.mean_bpm()
+        self._median_bpm = self.median_bpm()
+        self.window_duration = window_duration
+        # self._dx1 = self._compute_dx(self._filtered)
+        # self._ms_points = self.peaks(self._dx1)
+        # self._dx2 = self._compute_dx(self._dx1)
+        # self._dx3 = self._compute_dx(self._dx2)
 
-    def show_filtered(self, window):
-        return self.show(window, self.filtered())
+    def _values(self):
+        result_x = []
+        result_y = []
+        X, y = self.statistical()
+        for i in range(0, len(X), self.window_duration):
+            wx = X[i:i+30]
+            wy = y[i:i+30]
+            missing_on_window = self.window_duration - len(wx)
+            if missing_on_window > 0:
+                wx = np.concatenate([wx, np.zeros((missing_on_window, np.shape(wx)[1]))])
+                wy = np.concatenate([wy,np.zeros(missing_on_window)])
 
-    def filtered(self, data):
-        return filter_signal(data, self._x.sampling)
+            result_x.append(wx)
+            label = int(stats.mstats.mode(wy).mode[0])
+            result_y.append([label for _ in wy])
+        self._computed_x = result_x
+        self._computed_y = result_y
+        return result_x, result_y
+    
+    def x(self):
+        if self.experiment_type == ExperimentType.END_TO_END:
+            return super().x()
+        else:
+            if len(self._computed_x) > 0:
+                return self._computed_x
+            _x, _ = self._values()
+            return _x
+
+    def y(self):
+        if self.experiment_type == ExperimentType.END_TO_END:
+            return super().y()
+        else:
+            if len(self._computed_y) > 0:
+                return self._computed_y
+            _, _y = self._values()
+            return _y
+
+
+    def statistical(self):
+        x = np.array([*zip(self._peaks, self._bpm, self._ibi, self._mean_bpm, self._median_bpm, *self._stats())])
+        x = MinMaxScaler().fit_transform(x)
+        return x, self._peak_label
+
+    def _stats(self):
+        std = []
+        mean = []
+        median = []
+        max = []
+        min = []
+        windows = self.peak_data_window()
+        for w in windows:
+            std.append(np.std(w))
+            mean.append(np.mean(w))
+            median.append(np.median(w))
+            min.append(np.min(w))
+            max.append(np.max(w))
+        return std, mean, median, max, min
+
+
+    def peak_data_window(self):
+        result = []
+        start = 0
+        for i in range(0, len(self._peaks)):
+            end = self._peaks[i]+1 # first data point for the next window
+            window = self._data['ppg'][start:end]
+            result.append(window)
+            start = end
+        return result
+
+    def show_filtered(self, window, wn, n):
+        self._filtered = self.filtered(self._data['ppg'], n, wn)
+        start, finish = self.window(window)
+        data = self._filtered[start:finish]
+        peaks = self.peaks(data)
+        peak_val = [data[x] for x in peaks]
+        plt.figure(figsize=(25, 4))
+        plt.plot(peaks, peak_val, 'ro')
+        plt.plot(data)
+        plt.show()
+
+    def window(self, w):
+        ws = self._x.sampling * 30
+        w_start = w * ws
+        return w_start, w_start + ws
+
+    def peaks(self, data) -> list[int]:
+        peaks_x, _ = sig.find_peaks(data, distance=self.min_peak_distance(), height=0.0)
+        return peaks_x
+
+    def min_peak_distance(self):
+        return 0.6 * self._x.sampling
+
+    def filtered(self, data, wn, n):
+        return filter_signal(data, self._x.sampling, wn, n)
+
+    def bpm(self):
+        bpm = []
+        for i in range(0, len(self._peaks) - 1):
+            bpm.append(self._x.sampling / abs(self._peaks[i] - self._peaks[i+1]) *  60)
+        # get last bpm with leftover data
+        last_bpm = (self._x.sampling / len(self._filtered) - self._peaks[len(self._peaks) - 1]) * 60
+        bpm.append(np.mean([ bpm[len(bpm) -1], last_bpm, bpm[len(bpm) -1] ]))
+        return bpm
+    
+    def ibi(self):
+        ibi = []
+        for i in range(0, len(self._peaks)):
+            if i == 0:
+                ibi.append(self._peaks[i] / self._x.sampling)
+            else:
+                ibi.append((self._peaks[i] - self._peaks[i-1]) / self._x.sampling)
+        return ibi
+
+    def mean_bpm(self):
+        mean = []
+        for i in range(0, len(self._bpm)):
+            if i == 0:
+                mean.append(np.mean([self._bpm[0], self._bpm[0], self._bpm[1]]))
+            elif i == len(self._bpm) -1:
+                mean.append(np.mean([self._bpm[len(self._bpm) -2], self._bpm[len(self._bpm) -1], self._bpm[len(self._bpm) -1]]))
+            else:
+                mean.append(np.mean([self._bpm[i - 1], self._bpm[i], self._bpm[i+1]]))
+        return mean
+
+    def median_bpm(self):
+        median = []
+        for i in range(0, len(self._bpm)):
+            if i == 0:
+                median.append(np.median([self._bpm[0], self._bpm[0], self._bpm[1]]))
+            elif i == len(self._bpm) -1:
+                median.append(np.median([self._bpm[len(self._bpm) -2], self._bpm[len(self._bpm) -1], self._bpm[len(self._bpm) -1]]))
+            else:
+                median.append(np.median([self._bpm[i - 1], self._bpm[i], self._bpm[i+1]]))
+        return median
+
+
+
+
+    # def show_dx1(self,w):
+    #     start = self._ms_points[w]
+    #     finish = self._ms_points[w + 1]
+    #     data = [self._filtered[p] for p in range(start, finish)]
+    #     plt.figure(figsize=(25, 4))
+    #     plt.plot(0, self._filtered[start], 'ro')
+    #     plt.plot(data)
+    #     plt.show()
+    #
+    # def show_dx(self, w, dxn=1):
+    #     data = self._dx1
+    #     if dxn == 2:
+    #         data = self._dx2
+    #     if dxn == 3:
+    #         data = self._dx3
+    #     start, finish = self.window(w)
+    #     w_peaks = []
+    #     for p in self.peaks(data):
+    #         if start <= p <= finish:
+    #             w_peaks.append(p)
+    #     peaks_v = [data[p] for p in w_peaks]
+    #     peak_x = [dxp - start for dxp in w_peaks]
+    #
+    #     plt.figure(figsize=(25, 4))
+    #     plt.plot(peak_x, peaks_v, 'ro')
+    #     plt.plot(data[start:finish])
+    #     plt.show()
+    #
+    # def _compute_dx(self, x) -> list[float]:
+    #     dx = []
+    #     for i in range(1, len(x) -1):
+    #         dx.append((x[i-1] - x[i+1]) * self._x.sampling)
+    #     dx.insert(0, dx[0])
+    #     dx.append(dx[len(dx) - 1])
+    #     return dx
+    #
+    # def _point_dx(self, p1: float, p2: float):
+    #     return p1 - p2
+
 
 class PPGWindow():
     def __init__(self, signal: Signal, x: int, y):
