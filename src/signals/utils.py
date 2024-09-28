@@ -5,11 +5,10 @@ import scipy.stats
 from sklearn.preprocessing import MinMaxScaler
 
 def filter_signal(signal, sampling):
-    sos = scipy.signal.iirfilter(4, Wn=[0.7, 3.0], fs=sampling, btype="bandpass",
-                             ftype="butter", output="sos")
-    result = scipy.signal.sosfilt(sos, signal)
-    # result = nk.signal_detrend(signal)
-    # result = nk.signal_filter(result, lowcut=0.7, highcut=3.0)
+    result = scipy.stats.mstats.winsorize(signal, limits=[0.03, 0.03])
+    # sos = scipy.signal.iirfilter(4, Wn=[0.4, 3], fs=sampling, btype="bandpass",
+    #                          ftype="butter", output="sos")
+    # result = scipy.signal.sosfilt(sos, signal)
     result = pd.Series(result).iloc[::1]
     result = np.array(result).reshape(-1, 1)
     scaler = MinMaxScaler()

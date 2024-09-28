@@ -29,9 +29,13 @@ class PPGExperiment(Experiment):
 class PPGSubject(Subject):
     def __init__(self, path, subject_id, sensor, device):
         Subject.__init__(self, path=path, id=subject_id, device=device, sensor=sensor)
+        self._filtered = self.filtered(self._data['ppg'])
 
-    def filter(self, data):
-        return filter_signal(data[self._x.name], self._x.sampling)
+    def show_filtered(self, window):
+        return self.show(window, self.filtered())
+
+    def filtered(self, data):
+        return filter_signal(data, self._x.sampling)
 
 class PPGWindow():
     def __init__(self, signal: Signal, x: int, y):
