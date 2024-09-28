@@ -24,8 +24,8 @@ def get_search_space(classifier_name):
 
     result["lstm"] = (optimizer_subspace, subspace1, subspace2,hp.choice(f"lstm_units", [1, 2, 3]))
 
-    subspace1 = [hp.choice("filters", [16, 32, 64])]
-    subspace2 = [hp.choice("kernel_size_multiplier", [1, 2, 4])]
+    subspace1 = hp.choice("filters", [16, 32, 64])
+    subspace2 = hp.choice("kernel_size_multiplier", [1, 2, 4])
     result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3, 4]), subspace1, subspace2)
 
     return result[classifier_name]
@@ -36,9 +36,9 @@ def get_hyperparameters(classifier, x):
     if classifier in ["cnn", "fcn"]:
         return Hyperparameters(lr, decay, reduce_lr_factor,  batch_size, filters_multipliers=x[1], kernel_size_multiplier=x[2], baseline_weight=baseline_weight)
     if classifier == "lstm":
-        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, filters_multipliers=x[1], kernel_size_multiplier=x[2], lstm_units=x[3])
+        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, filters_multipliers=x[1], kernel_size_multiplier=x[2], lstm_units=x[3], baseline_weight=baseline_weight)
     if classifier == "resnet":
-        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, depth=x[1], filters=x[2][0], kernel_size_multiplier=x[3][0])
+        return Hyperparameters(lr, decay, reduce_lr_factor, batch_size, depth=x[1], filters=x[2], kernel_size_multiplier=x[3], baseline_weight=baseline_weight)
     raise NoSuchClassifier(classifier)
 
 def best_trial_hyperparameter(trials):

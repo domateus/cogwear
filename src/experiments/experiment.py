@@ -38,8 +38,8 @@ class Experiment(ABC):
         self.test_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test", self.classifier)
         self.test_metrics_path =  os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "test")
         self.analysis_path = os.path.join(path, results_folder_name, self.type.name, f"{self.device}_{self.signal}", "analysis")
-        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in subjects]
-        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor="ppg", window_duration=window_duration) for id in test_subjects]
+        self.subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration) for id in subjects]
+        self.test_subjects = [subject(path=self.data_path, id=f"{id}", device=device, sensor=signal, window_duration=window_duration) for id in test_subjects]
         self.splits: list[Split] = []
         for split in losocv_splits(pilot):
             self.splits.append(split.into(self.subjects))
