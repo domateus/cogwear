@@ -13,8 +13,8 @@ from keras.api.backend import clear_session
 
 def get_search_space(classifier_name):
     result = {}
-    optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.01, .001, .0001, .00001]),
-                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("batch_size", [2, 4, 8, 16, 32]), hp.randint("baseline_weight", 2, 3)]
+    optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.001, .0001, .00001]),
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("batch_size", [2, 4, 8, 16]), hp.randint("baseline_weight", 2, 3)]
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
