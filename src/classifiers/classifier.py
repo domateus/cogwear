@@ -29,7 +29,7 @@ class Classifier(ABC):
 
     def create_callbacks(self):
         model_checkpoint = callbacks.ModelCheckpoint(filepath=os.path.join(self.output_directory, f"{self.fold}_best_model.weights.h5"), monitor='val_loss', save_best_only=True, save_weights_only=True)
-        self.callbacks.append(model_checkpoint)
+        # self.callbacks.append(model_checkpoint)
         reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=self.hyperparameters.reduce_lr_factor, patience=self.hyperparameters.reduce_lr_patience)
         self.callbacks.append(reduce_lr)
         early_stopping = callbacks.EarlyStopping(patience=30)

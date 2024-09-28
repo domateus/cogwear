@@ -7,10 +7,10 @@ from math import floor
 import scipy.stats as stats
 
 class EEGSubject(Subject):
-    def __init__(self, path, id, device, sensor):
+    def __init__(self, path, id, device, sensor, window_duration):
         self._eeg_cols = ['Alpha_TP9','Alpha_AF7','Alpha_AF8','Alpha_TP10','Beta_TP9','Beta_AF7','Beta_AF8','Beta_TP10','Gamma_TP9','Gamma_AF7','Gamma_AF8','Gamma_TP10','Theta_TP9','Theta_AF7','Theta_AF8','Theta_TP10','Delta_TP9','Delta_AF7','Delta_AF8','Delta_TP10']
 
-        Subject.__init__(self, path=path, id=id, device="muse", sensor="eeg")
+        Subject.__init__(self, path=path, id=id, device="muse", sensor="eeg", window_duration=window_duration)
 
     def _get_signal(self):
         data = [self._data[col] for col in self._eeg_cols]
