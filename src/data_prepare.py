@@ -27,7 +27,7 @@ def remove_unused_files_recursive(data_path):
 
 eeg_waves = ['Alpha', 'Beta', 'Gamma', 'Theta', 'Delta']
 def filter_eeg_columns(pd):
-      result = pd[list(filter(None, [col if wave in col else None for wave in eeg_waves for col in pd.columns]))]
+      result = pd[list(filter(None, [col if wave in col or col == 'y' else None for wave in eeg_waves for col in pd.columns]))]
       return result.dropna()
 
 def get_remove_window_size(filename: str) -> int:
