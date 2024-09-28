@@ -1,4 +1,5 @@
 import scipy.stats as stats
+from matplotlib import pyplot as plt
 import numpy as np
 from abc import ABC
 from math import floor
@@ -56,3 +57,8 @@ class Subject(ABC):
 
     def load(self):
         return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))
+
+    def show(self, window):
+        plt.figure(figsize=(25, 4))
+        plt.plot(self.x[window])
+        plt.show()

@@ -1,4 +1,7 @@
 # pyright can be annoying
+import numpy as np
+import re
+from matplotlib import pyplot as plt
 from src.signals.subject import Subject, Signal
 from math import floor
 import scipy.stats as stats
@@ -25,4 +28,20 @@ class EEGSubject(Subject):
             for s in x:
                 s.append(0)
         return x, y
-    
+
+    def show(self, window):
+        _, ax = plt.subplots(5, figsize=(25, 20))
+        for i in range(0, np.shape(self.x)[1], 4):
+            title = self._eeg_cols[i].split('_')[0]
+            c1 = self._eeg_cols[i].split('_')[1]
+            c2 = self._eeg_cols[i+1].split('_')[1]
+            c3 = self._eeg_cols[i+2].split('_')[1]
+            c4 = self._eeg_cols[i+3].split('_')[1]
+
+            ax[i//4].plot(self.x[window][i], label=c1)
+            ax[i//4].plot(self.x[window][i+1], label=c2)
+            ax[i//4].plot(self.x[window][i+2], label=c3)
+            ax[i//4].plot(self.x[window][i+3], label=c4)
+            ax[i//4].legend()
+            ax[i//4].title.set_text(title)
+
