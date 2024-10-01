@@ -14,22 +14,23 @@ class EEGExperiment(Experiment):
         Experiment.__init__(self, 'eeg', classifier, type, path, 'muse', EEGSubject, 30)
 
     def shape(self):
-        x_test, y_test = self.get_test_data()
-        return (x_test.shape[0], *x_test.shape[-2:])
+        x_test, _ = self.get_test_data()
+        s = np.shape(x_test)
+        return (s[0], *s[-2:])
 
     def get_train_data(self, fold: Split, percentage_data=1.):
         x_train, y_train, x_test, y_test, x_val, y_val = super().get_train_data(fold, percentage_data)
 
-        x_train = np.array([*x_train.swapaxes(0,1)])
-        x_test = np.array([*x_test.swapaxes(0,1)])
-        x_val = np.array([*x_val.swapaxes(0,1)])
+        x_train = [*np.swapaxes(x_train, 0,1)]
+        x_test = [*np.swapaxes(x_test, 0,1)]
+        x_val = [*np.swapaxes(x_val, 0,1)]
 
         return x_train, y_train, x_test, y_test, x_val, y_val
 
     def get_test_data(self):
         x, y = super().get_test_data()
 
-        x = np.array([*x.swapaxes(0,1)])
+        x= [*np.swapaxes(x, 0,1)]
 
         return x, y
 

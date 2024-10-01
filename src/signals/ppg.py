@@ -24,18 +24,20 @@ class PPGExperiment(Experiment):
         self.path = path
 
     def shape(self):
-        if ExperimentType.FEATURE_ENGINEERING and self.classifier == 'cnn':
+        if ExperimentType.FEATURE_ENGINEERING:
             x_test, y_test = self.get_test_data()
+            s = np.shape(x_test)
             # cols, window_size, 1
-            return (x_test.shape[0], *x_test.shape[-2:])
+            return (s[0], *s[-2:])
         else:
             return super().shape()
 
     def get_test_data(self):
         x, y = super().get_test_data()
-        if ExperimentType.FEATURE_ENGINEERING == self.type and 'cnn' == self.classifier:
+        if ExperimentType.FEATURE_ENGINEERING == self.type:
+            x = np.array(x)
             cols = x.shape[-1:][0]
-            x = x.reshape((cols, -1, self.window_duration, 1))
+            x = [*x.reshape((cols, -1, self.window_duration, 1))]
             new_y= []
             for w in y:
                 label = int(stats.mstats.mode(w).mode[0])
@@ -45,11 +47,12 @@ class PPGExperiment(Experiment):
 
     def get_train_data(self, fold: Split, percentage_data=1.):
         x_train, y_train, x_test, y_test, x_val, y_val = super().get_train_data(fold, percentage_data)
-        if ExperimentType.FEATURE_ENGINEERING == self.type and 'cnn' == self.classifier:
-            cols = x_val.shape[-1:][0]
-            x_train = x_train.reshape(( cols,-1, self.window_duration, 1))
-            x_test = x_test.reshape(( cols,-1, self.window_duration, 1))
-            x_val = x_val.reshape(( cols,-1, self.window_duration, 1))
+        if ExperimentType.FEATURE_ENGINEERING == self.type:
+            cols = np.shape(x_val)[-1:][0]
+            # they need to be a normal list for keras to work
+            x_train = [*np.reshape(x_train,(cols,-1, self.window_duration, 1))]
+            x_test = [*np.reshape(x_test,(cols,-1, self.window_duration, 1))]
+            x_val = [*np.reshape(x_val,(cols,-1, self.window_duration, 1))]
             new_y_train = []
             for w in y_train:
                 label = int(stats.mstats.mode(w).mode[0])

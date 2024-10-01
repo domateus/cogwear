@@ -41,16 +41,17 @@ class Experiment(ABC):
 
     def shape(self):
         x_test, y_test = self.get_test_data()
-        return x_test.shape[1:]
+        s = np.shape(x_test)
+        return s[1:]
 
 
     def get_train_data(self, fold: Split, percentage_data=1.):
         x_train, y_train, x_test, y_test, x_val, y_val = fold.x_train(), fold.y_train(), fold.x_test(), fold.y_test(), fold.x_val(), fold.y_val()
         x_train, y_train, x_test, y_test, x_val, y_val = self._partial(x_train, percentage_data), self._partial(y_train, percentage_data), self._partial(x_test, percentage_data), self._partial(y_test, percentage_data), self._partial(x_val, percentage_data),self._partial(y_val, percentage_data) 
-        return x_train, y_train, x_test, y_test, x_val, y_val
+        return [*x_train], y_train, [*x_test], y_test, [*x_val], y_val
 
     def get_test_data(self):
-        x = np.concatenate([s.x() for s in self.test_subjects])
+        x = [*np.concatenate([s.x() for s in self.test_subjects])]
         y = np.concatenate([s.y() for s in self.test_subjects])
         return x, y
 
