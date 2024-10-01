@@ -10,7 +10,7 @@ import os
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from src.classifiers.classifier import Classifier
-from src.data.utils import LOSOCV_SUBJECT_IDS, SUBJECTS_IDS, TEST_SUBJECT_IDS, losocv_splits
+from src.data.utils import Split
 from src.signals.subject import Subject
 from src.signals.utils import filter_signal
 from src.signals.signal import Signal
@@ -18,10 +18,51 @@ from src.experiments.consts import  ExperimentType
 from src.experiments.experiment import Experiment
 
 class PPGExperiment(Experiment):
-    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30, pilot=False):
-        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, pilot=pilot, subject=PPGSubject)
+    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30):
+        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, subject=PPGSubject)
         self.device = device
         self.path = path
+
+    def get_test_data(self):
+        x, y = super().get_test_data()
+        if ExperimentType.FEATURE_ENGINEERING == self.type and 'cnn' == self.classifier:
+            cols = x.shape[-1:][0]
+            x = x.reshape((-1, cols, self.window_duration, 1))
+            new_y= []
+            for w in y:
+                label = int(stats.mstats.mode(w).mode[0])
+                new_y.append([ label ])
+            y = np.array(new_y)
+        return x, y
+
+    def get_train_data(self, fold: Split, percentage_data=1.):
+        x_train, y_train, x_test, y_test, x_val, y_val = super().get_train_data(fold, percentage_data)
+        if ExperimentType.FEATURE_ENGINEERING == self.type and 'cnn' == self.classifier:
+            cols = x_val.shape[-1:][0]
+            x_train = x_train.reshape(( cols,-1, self.window_duration, 1))
+            x_test = x_test.reshape(( cols,-1, self.window_duration, 1))
+            x_val = x_val.reshape(( cols,-1, self.window_duration, 1))
+            new_y_train = []
+            for w in y_train:
+                label = int(stats.mstats.mode(w).mode[0])
+                new_y_train.append([ label ])
+            y_train = np.array(new_y_train)
+
+            new_y_test = []
+            for w in y_test:
+                label = int(stats.mstats.mode(w).mode[0])
+                new_y_test.append([ label ])
+            y_test = np.array( new_y_test )
+
+            new_y_val = []
+            for w in y_val:
+                label = int(stats.mstats.mode(w).mode[0])
+                new_y_val.append([ label ])
+            y_val = np.array( new_y_val )
+
+        return x_train, y_train, x_test, y_test, x_val, y_val
+
+
 
 class PPGSubject(Subject):
     def __init__(self, path, id, sensor, device, experiment_type, window_duration=30):
@@ -52,8 +93,7 @@ class PPGSubject(Subject):
                 wy = np.concatenate([wy,np.zeros(missing_on_window)])
 
             result_x.append(wx)
-            label = int(stats.mstats.mode(wy).mode[0])
-            result_y.append([label for _ in wy])
+            result_y.append(wy)
         self._computed_x = result_x
         self._computed_y = result_y
         return result_x, result_y

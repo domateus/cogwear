@@ -77,7 +77,7 @@ class Subject(ABC):
         return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))
 
     def show(self, window, to_plot=[]):
-        data = to_plot if len(to_plot) > 0 else self.x[window]
+        data = to_plot if len(to_plot) > 0 else self.x()[window]
         plt.figure(figsize=(25, 4))
         plt.plot(data)
         plt.show()
