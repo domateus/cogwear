@@ -38,8 +38,10 @@ class Experiment(ABC):
         self.splits: list[Split] = []
         for split in losocv_splits():
             self.splits.append(split.into(self.subjects))
+
+    def shape(self):
         x_test, y_test = self.get_test_data()
-        self.shape = x_test.shape[1:]
+        return x_test.shape[1:]
 
 
     def get_train_data(self, fold: Split, percentage_data=1.):
@@ -62,7 +64,7 @@ class Experiment(ABC):
         fold = self.splits[fold_no]
         x_train, y_train, x_test, y_test, x_val, y_val = self.get_train_data(fold, percentage_data)
 
-        classifier = create_classifier(classifier_name=self.classifier, output_directory=self.trials_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=-1)
+        classifier = create_classifier(classifier_name=self.classifier, output_directory=self.trials_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=-1)
 
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
                        batch_size=hyperparameters.batch_size)
@@ -80,12 +82,7 @@ class Experiment(ABC):
         clear_session()
         x_train, y_train, x_test, y_test, x_val, y_val = self.get_train_data(fold)
 
-        if len(self.shape) > 2:
-            x_train = [*x_train.swapaxes(0,1)]
-            x_test = [*x_test.swapaxes(0,1)]
-            x_val = [*x_val.swapaxes(0,1)]
-
-        classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=fold.id)
+        classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold.id)
 
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
                        batch_size=hyperparameters.batch_size)
@@ -106,7 +103,7 @@ class Experiment(ABC):
         results = {}
         for model in best_models:
             fold_id = model[0:2]
-            classifier = create_classifier(classifier_name=self.classifier, output_directory=self.test_path, input_shape=self.shape, hyperparameters=hyperparameters, fold=fold_id)
+            classifier = create_classifier(classifier_name=self.classifier, output_directory=self.test_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold_id)
             print(f"model path: {os.path.join(self.losocv_path, model)}")
 
             metrics = classifier.predict(x, y, os.path.join(self.losocv_path, model))

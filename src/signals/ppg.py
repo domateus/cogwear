@@ -23,11 +23,19 @@ class PPGExperiment(Experiment):
         self.device = device
         self.path = path
 
+    def shape(self):
+        if ExperimentType.FEATURE_ENGINEERING and self.classifier == 'cnn':
+            x_test, y_test = self.get_test_data()
+            # cols, window_size, 1
+            return (x_test.shape[0], *x_test.shape[-2:])
+        else:
+            return super().shape()
+
     def get_test_data(self):
         x, y = super().get_test_data()
         if ExperimentType.FEATURE_ENGINEERING == self.type and 'cnn' == self.classifier:
             cols = x.shape[-1:][0]
-            x = x.reshape((-1, cols, self.window_duration, 1))
+            x = x.reshape((cols, -1, self.window_duration, 1))
             new_y= []
             for w in y:
                 label = int(stats.mstats.mode(w).mode[0])

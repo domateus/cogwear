@@ -13,6 +13,10 @@ class EEGExperiment(Experiment):
     def __init__(self, classifier: str, type: ExperimentType, path: str):
         Experiment.__init__(self, 'eeg', classifier, type, path, 'muse', EEGSubject, 30)
 
+    def shape(self):
+        x_test, y_test = self.get_test_data()
+        return (x_test.shape[0], *x_test.shape[-2:])
+
     def get_train_data(self, fold: Split, percentage_data=1.):
         x_train, y_train, x_test, y_test, x_val, y_val = super().get_train_data(fold, percentage_data)
 

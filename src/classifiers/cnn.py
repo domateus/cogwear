@@ -21,11 +21,13 @@ class Cnn(Classifier):
         shape = input_shape if len(input_shape) == 2 else input_shape[1:]
         cols = 1 if len(input_shape) == 2 else input_shape[0]
 
+        print(f'number of colums: {cols}')
+
         for _ in range(0, cols):
             input_layer = layers.Input(shape)
             input_layers.append(input_layer)
 
-            kernel_size = int(kernel_size_multipliers * 7)
+            kernel_size = int(kernel_size_multipliers * 2)
 
             conv1 = layers.Conv1D(filters=int(filters_multipliers * 6), kernel_size=kernel_size,
                                         padding=padding, activation='relu')(input_layer)
