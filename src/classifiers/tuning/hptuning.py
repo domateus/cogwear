@@ -13,8 +13,8 @@ from keras.api.backend import clear_session
 
 def get_search_space(classifier_name):
     result = {}
-    optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.001, .0001, .00001]),
-                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("batch_size", [2, 4, 8, 16]), hp.randint("baseline_weight", 2, 3)]
+    optimizer_subspace = [hp.randint("lr_power", 3, 5), hp.choice("decay", [.001, .0001, .00001]),
+                          hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]), hp.choice("batch_size", [4, 8, 16]), hp.randint("baseline_weight", 2, 3)]
 
     subspace1 = hp.choice(f"filters_multiplier", [0.5, 1, 2])
     subspace2 = hp.choice(f"kernel_size_multiplier", [0.5, 1, 2])
@@ -96,7 +96,7 @@ class Tuner():
         hp = get_hyperparameters(self.experiment.classifier, x)
         with tf.device('/device:GPU:0'):
             clear_session()
-            _, loss = self.experiment.run_once(hp, percentage_data=.2)
+            _, loss = self.experiment.run_once(hp, percentage_data=.1)
             clear_session()
 
         return {"status": STATUS_OK,
