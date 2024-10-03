@@ -1,7 +1,7 @@
 import pandas as pd
 from math import ceil
 from random import randrange
-from src.data.utils import TEST_SUBJECT_IDS, Split, create_classifier,losocv_splits
+from src.data.utils import LOSOCV_SUBJECT_IDS, TEST_SUBJECT_IDS, Split, create_classifier,losocv_splits
 from abc import ABC
 from src.data.utils import SUBJECTS_IDS
 from src.signals.subject import Subject
@@ -23,7 +23,7 @@ class Experiment(ABC):
         self.classifier = classifier
         self.path = path
         self.data_path = os.path.join(path, 'survey_gamification')
-        subjects = SUBJECTS_IDS
+        subjects = LOSOCV_SUBJECT_IDS
         test_subjects = TEST_SUBJECT_IDS
         self.device = device
         self.window_duration = window_duration
@@ -85,8 +85,7 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold.id)
 
-        metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
-                       batch_size=hyperparameters.batch_size)
+        metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs, batch_size=hyperparameters.batch_size)
 
         self.logger.info(f"Fold: {fold.id} => loss: {loss}")
 

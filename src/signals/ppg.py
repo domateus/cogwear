@@ -105,7 +105,7 @@ class PPGSubject(Subject):
 
             result_x.append(wx)
             result_y.append(wy)
-        self._computed_x = result_x
+            self._computed_x = result_x
         self._computed_y = result_y
         return result_x, result_y
     
@@ -129,7 +129,7 @@ class PPGSubject(Subject):
 
 
     def statistical(self):
-        x = np.array([*zip(self._peaks, self._bpm, self._ibi, self._mean_bpm, self._median_bpm, *self._stats())])
+        x = np.array([*zip(self._bpm, self._ibi, self._mean_bpm, self._median_bpm, *self._stats())])
         x = MinMaxScaler().fit_transform(x)
         return x, self._peak_label
 
