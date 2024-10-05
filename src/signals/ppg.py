@@ -9,6 +9,9 @@ import scipy.signal as sig
 import os
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from src.classifiers.svm import Svm
+from src.classifiers.xgb import Xgb
+from src.classifiers.knn import Knn
 from src.classifiers.classifier import Classifier
 from src.data.utils import Split
 from src.signals.subject import Subject
@@ -16,12 +19,36 @@ from src.signals.utils import filter_signal
 from src.signals.signal import Signal
 from src.experiments.consts import  ExperimentType
 from src.experiments.experiment import Experiment
+from random import randrange
 
 class PPGExperiment(Experiment):
     def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30):
         Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, subject=PPGSubject)
         self.device = device
         self.path = path
+
+    def run_once(self, hyperparameters, percentage_data=1.):
+        if ExperimentType.END_TO_END == self.type or self.classifier == 'cnn':
+            return super().run_once(hyperparameters, percentage_data)
+
+        fold_no = randrange(10)
+        logging_message = "Experiment for {} signal, classifier: {}, fold: {}".format(
+            self.signal, self.classifier, fold_no)
+        self.logger.info(logging_message)
+
+        classifier = None
+        if self.classifier == 'svm':
+            classifier = Svm()
+        if self.classifier == 'xgb':
+            classifier = Xgb()
+        if self.classifier == 'knn':
+            classifier = Knn()
+
+        loss = classifier.run_once(self, hyperparameters, fold_no, False)
+
+        self.logger.info("Finished e" + logging_message[1:])
+
+        return None, loss
 
     def shape(self):
         if ExperimentType.FEATURE_ENGINEERING:

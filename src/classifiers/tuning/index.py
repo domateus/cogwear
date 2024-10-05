@@ -43,8 +43,10 @@ class Tuner():
             _, loss = self.experiment.run_once(hp, percentage_data=.2)
             clear_session()
 
+            
+
         return {"status": STATUS_OK,
-                "x": hp.dict(),
+                "x": self.space.dict(hp),
                 "loss": loss}
             
     def best_hyperparameters(self):

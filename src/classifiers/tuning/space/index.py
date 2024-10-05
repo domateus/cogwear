@@ -5,6 +5,10 @@ class Space(ABC):
         self.c = classifier
 
     @abstractmethod
+    def dict(self, hyperparameters):
+        pass
+
+    @abstractmethod
     def get_hyperparameters(self, x):
         pass
 

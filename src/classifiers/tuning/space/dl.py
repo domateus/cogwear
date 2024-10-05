@@ -1,10 +1,14 @@
 from math import log10
+from typing import Any
 from src.exception import NoSuchClassifier
 from src.classifiers.hyperparameters import Hyperparameters
 from hyperopt import  hp
 from src.classifiers.tuning.space.index import Space
 
 class Deep(Space):
+    def dict(self, hyperparameters: Any):
+        return hp.dict()
+
     def get_search_space(self):
         result = {}
         optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.01, .001, .0001, .00001]),

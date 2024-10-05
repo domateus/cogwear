@@ -4,6 +4,9 @@ import numpy as np
 from src.classifiers.tuning.space.index import Space
 
 class Shallow(Space):
+    def dict(self, hyperparameters):
+        return hyperparameters
+
     def get_hyperparameters(self, x):
         return x
 
@@ -30,16 +33,16 @@ class Shallow(Space):
             'seed' : 42
         }
         result["knn"] = {
-            'n_neighbors': hp.uniform('n_neighbors', 1, 10),
+            'n_neighbors': hp.randint('n_neighbors', 1, 10),
             'weights': hp.choice('weights', ['uniform', 'distance']),
             'algorithm': hp.choice('algorithm', ['ball_tree', 'kd_tree', 'brute']),
-            'leaf_size': hp.uniform('leaf_size', 2, 100),
+            'leaf_size': hp.randint('leaf_size', 2, 100),
             'p': hp.choice('p', [1, 2]),
             'n_jobs': -1
         }
         result["svm"] = {
-            'C': hp.choice('C', [0, 0.1, 0.01, 0.001, 1, 10, 100]),
-            'kernel': hp.choice('kernel', ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']),
+            'C': hp.choice('C', [0.1, 0.01, 0.001, 0.0001, 1, 10, 100, 1000]),
+            'kernel': hp.choice('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
             'degree': hp.randint('degree', 1, 5),
             'gamma': hp.choice('gamma', ['scale', 'auto']),
             'class_weight': hp.choice('class_weight', ['balanced', None])
