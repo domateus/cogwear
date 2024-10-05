@@ -28,6 +28,8 @@ class Classifier(ABC):
         pass
 
     def create_callbacks(self):
+        backup = callbacks.BackupAndRestore(backup_dir="/tmp/backup")
+        self.callbacks.append(backup)
         model_checkpoint = callbacks.ModelCheckpoint(filepath=os.path.join(self.output_directory, f"{self.fold}_best_model.weights.h5"), monitor='val_loss', save_best_only=True, save_weights_only=True)
         self.callbacks.append(model_checkpoint)
         reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=self.hyperparameters.reduce_lr_factor, patience=self.hyperparameters.reduce_lr_patience)

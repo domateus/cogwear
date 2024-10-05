@@ -9,11 +9,11 @@ class Hyperparameters():
         self.depth = depth
         self.lstm_units = lstm_units
         self.batch_size = batch_size
-        self.epochs = 200
+        self.epochs = 300
         self.lr = 1 / 10 ** lr_power
         self.decay = decay
         self.reduce_lr_factor = reduce_lr_factor
-        self.reduce_lr_patience = 10
+        self.reduce_lr_patience = 30
         self.class_weights = {0: 1*baseline_weight, 1: 1}
 
 
