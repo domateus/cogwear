@@ -9,10 +9,11 @@ from src.logger import log_predicions, logger, save_logs
 
 
 class Classifier(ABC):
-    def __init__(self, output_directory, input_shape, hyperparameters: Hyperparameters, verbose=False, model_init: models.Model | None = None, fold=-1):
+    def __init__(self, output_directory, input_shape, hyperparameters: Hyperparameters, verbose=False, model_init: models.Model | None = None, fold=-1, name=""):
         self.output_directory = output_directory
         self.verbose = verbose
         self.fold = fold
+        self.name = name
         self.hyperparameters = hyperparameters
         self.callbacks = []
         self.best_model_path = os.path.join(output_directory, '-1_best_model.weights.h5')
@@ -27,19 +28,21 @@ class Classifier(ABC):
         pass
 
     def create_callbacks(self):
+        backup = callbacks.BackupAndRestore(backup_dir="/tmp/backup")
+        self.callbacks.append(backup)
         model_checkpoint = callbacks.ModelCheckpoint(filepath=os.path.join(self.output_directory, f"{self.fold}_best_model.weights.h5"), monitor='val_loss', save_best_only=True, save_weights_only=True)
         self.callbacks.append(model_checkpoint)
         reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=self.hyperparameters.reduce_lr_factor, patience=self.hyperparameters.reduce_lr_patience)
         self.callbacks.append(reduce_lr)
-        early_stopping = callbacks.EarlyStopping(patience=15)
+        early_stopping = callbacks.EarlyStopping(patience=30)
         self.callbacks.append(early_stopping)
 
     def get_optimizer(self):
-        return optimizers.Adam(clipnorm=1, learning_rate=self.hyperparameters.lr, weight_decay=self.hyperparameters.decay)
+        return optimizers.AdamW(learning_rate=self.hyperparameters.lr, weight_decay=self.hyperparameters.decay)
 
     def fit(self, x_train, y_train, x_val, y_val, y_true, batch_size=16, nb_epochs=500, x_test=None, shuffle=True):
         mini_batch_size = int(min(x_train[0].shape[0] / 10, batch_size))
-        logger.info("Fitting model")
+        logger.info(f"Fitting model: {self.name}, shape: {x_train[0].shape}")
         start_time = time.time()
         hist = self.model.fit(x_train, y_train, class_weight=self.hyperparameters.class_weights, batch_size=mini_batch_size, epochs=nb_epochs, verbose='2' if self.verbose else '1', validation_data=(x_val, y_val), callbacks=self.callbacks, shuffle=shuffle)
         duration = time.time() - start_time

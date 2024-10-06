@@ -1,5 +1,6 @@
 from src.classifiers.tuning.hptuning import Tuner
-from src.experiments.experiment import ExperimentType, Experiment
+from src.experiments.experiment import  Experiment
+from src.experiments.consts import ExperimentType
 from src.signals.eeg import EEGSubject
 from src.signals.eda import EDAExperiment
 import os

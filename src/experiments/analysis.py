@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 from src.classifiers.tuning.hptuning import Tuner
-from src.experiments.experiment import ExperimentType, Experiment
+from src.experiments.experiment import  Experiment
+from src.experiments.consts import ExperimentType
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 

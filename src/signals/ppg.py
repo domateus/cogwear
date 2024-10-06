@@ -1,143 +1,147 @@
-from math import floor
-from abc import ABC
+from heartpy.analysis import clean_rr_intervals, calc_rr, calc_fd_measures
+from heartpy.peakdetection import check_peaks
 import numpy as np
-import heartpy as hp
 from matplotlib import pyplot as plt
-import itertools as it
 import scipy.stats as stats
 import scipy.signal as sig
-import os
-import pandas as pd
-from src.classifiers.classifier import Classifier
-from src.data.utils import LOSOCV_SUBJECT_IDS, SUBJECTS_IDS, TEST_SUBJECT_IDS, losocv_splits
+from sklearn.preprocessing import MinMaxScaler
+from src.classifiers.svm import Svm
+from src.classifiers.xgb import Xgb
+from src.classifiers.knn import Knn
 from src.signals.subject import Subject
 from src.signals.utils import filter_signal
-from src.signals.signal import Signal
-from src.experiments.experiment import Experiment, ExperimentType
-
-class PPG():
-    def __init__(self, path):
-        print(path)
+from src.experiments.consts import  ExperimentType
+from src.experiments.experiment import Experiment
+from random import randrange
 
 class PPGExperiment(Experiment):
-    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung"):
-        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path)
+    def __init__(self, path: str, type: ExperimentType, classifier: str, device="samsung", window_duration=30):
+        Experiment.__init__(self, signal="ppg", classifier=classifier,type=type, device= device, path=path, window_duration=window_duration, subject=PPGSubject)
         self.device = device
         self.path = path
 
+    def run_once(self, hyperparameters, percentage_data=1.):
+        if ExperimentType.END_TO_END == self.type or self.classifier == 'cnn':
+            return super().run_once(hyperparameters, percentage_data)
+
+        fold_no = randrange(10)
+        logging_message = "Experiment for {} signal, classifier: {}, fold: {}".format(
+            self.signal, self.classifier, fold_no)
+        self.logger.info(logging_message)
+
+        classifier = None
+        if self.classifier == 'svm':
+            classifier = Svm()
+        if self.classifier == 'xgb':
+            classifier = Xgb()
+        if self.classifier == 'knn':
+            classifier = Knn()
+
+        loss = classifier.run_once(self, hyperparameters, fold_no, False)
+
+        self.logger.info("Finished e" + logging_message[1:])
+
+        return None, loss
 
 class PPGSubject(Subject):
-    def __init__(self, path, subject_id, sensor, device):
-        Subject.__init__(self, path=path, id=subject_id, device=device, sensor=sensor)
+    def __init__(self, path, id, sensor, device, experiment_type, window_duration=30):
+        Subject.__init__(self, path=path, id=id, device=device, sensor=sensor, experiment_type=experiment_type)
+        self._filtered = self.filtered(self._data['ppg'], [0.1, 9], 2)
+        self._peaks = self.peaks(self._filtered)
+        self._peak_label = [self._data['y'][p] for p in self._peaks]
+        self.window_duration = window_duration
 
-    def filter(self, data):
-        return filter_signal(data[self._x.name], self._x.sampling)
+    def hp_values(self, peaks):
+        wd = calc_rr(peaks, sample_rate=self._x.sampling)
+        ybeat = [self._filtered[p] for p in peaks]
+        wd = check_peaks(wd['RR_list'], peaks, ybeat, working_data=wd)
+        wd, m = calc_fd_measures(working_data=wd)
+        wd = clean_rr_intervals(wd)
+        return wd, m
 
-class PPGWindow():
-    def __init__(self, signal: Signal, x: int, y):
-        self.signal: Signal = signal
-        self.x = signal.data
-        self.index = x
-        self.y = y
-        self.window_overlap_ratio = 0.5
-        self._dx1 = []
-        self._dx2 = []
-        self._dx3 = []
-        self._x_peaks = []
-        self._bpm = pd.DataFrame()
+    def all_windows(self):
+        ws = self._x.sampling * self.window_duration
+        data = []
+        ys = []
+        for x in range(0, len(self._filtered), ws):
+            w = [v for v in self._filtered[x:x+ws]]
+            y = [v for v in self._data['y'][x:x+ws]]
+            for _ in range(0, ws - len(w)):
+                w.append(0)
+                y.append(0)
+            label = int(stats.mstats.mode(y).mode[0])
+            ys.append(label)
+            data.append(w)
+        return data, ys
+
+    def values(self):
+        ws, ys = self.all_windows()
+        result = []
+        for w in ws:
+            peaks = self.peaks(w)
+            bpm = self.bpm(peaks)
+            ibi = self.ibi(peaks)
+            wd, _ = self.hp_values(peaks)
+            row = []
+            for v in self.sts(wd['RR_list']):
+                row.append(v)
+            for v in self.sts(wd['RR_diff']):
+                row.append(v)
+            for v in self.sts(wd['RR_sqdiff']):
+                row.append(v)
+            for v in self.sts(wd['RR_list_cor']):
+                row.append(v)
+            for v in self.sts(wd['frq']):
+                row.append(v)
+            for v in self.sts(wd['psd']):
+                row.append(v)
+            for v in self.sts(bpm):
+                row.append(v)
+            for v in self.sts(ibi):
+                row.append(v)
+            for v in self.sts(w):
+                row.append(v)
+            row.append(len(wd['removed_beats']))
+            row.append(len(peaks))
+            result.append(row)
+        result = MinMaxScaler().fit_transform(result)
+        return result, ys
+
+    def show_filtered(self, window, wn, n):
+        self._filtered = self.filtered(self._data['ppg'], n, wn)
+        start, finish = self.window_bounds(window)
+        data = self._filtered[start:finish]
+        peaks = self.peaks(data)
+        peak_val = [data[x] for x in peaks]
+        plt.figure(figsize=(25, 4))
+        plt.plot(peaks, peak_val, 'ro')
+        plt.plot(data)
+        plt.show()
+
+    def window_bounds(self, w):
+        ws = self._x.sampling * self.window_duration
+        w_start = w * ws
+        return w_start, w_start + ws
+
+    def peaks(self, data) -> list[int]:
+        peaks_x, _ = sig.find_peaks(data, distance=self.min_peak_distance(), height=0.0)
+        #delete first peak if within first 150ms (signal might start mid-beat after peak)
+        return [p for p in peaks_x if p > self._x.sampling * 150/1000]
 
     def min_peak_distance(self):
-        """
-            The distance between peaks translates into the max frequency accepted for heart beats.
-            The current value used allows for (roughly) up to 2.2 beats per second, or 133bpm (which is a lot).
+        return 0.6 * self._x.sampling
 
-            A higher number is used in here due to the high noise on the Samsung device collected data, therefore
-            making it possible to better estimate where the peaks are.
-        """
-        return 0.45 * self.signal.sampling
+    def filtered(self, data, wn, n):
+        return filter_signal(data, self._x.sampling, wn, n)
 
-    def peaks(self) -> list[int]:
-        if len(self._x_peaks) == 0: 
-            self._x_peaks, _ = sig.find_peaks(self.x, distance=self.min_peak_distance(), height=0.0)
-        return self._x_peaks
-
-    def dx_peaks(self):
-        dx, _, _ = self.dx()
-        peaks, _ = sig.find_peaks(dx, distance=self.min_peak_distance(), height=0.0)
-        return peaks
-
-    def dx_valleys(self):
-        dx, _, _ = self.dx()
-        peaks, _ = sig.find_peaks([x*-1 for x in dx], distance=self.min_peak_distance(), height=0.0)
-        return peaks
-
-    def dicrotic_notch(self):
-        self.peaks()
-
-    def dx(self):
-        """
-            Derivation for the data signal, should only be used with filtered data.
-        """
-        if len(self._dx1) == 0 and len(self._dx2) == 0 and len(self._dx3) == 0:
-            dx1 = self._compute_dx(self.x, scaleTime=True)
-            dx2 = self._compute_dx(dx1)
-            dx3 = self._compute_dx(dx2)
-            self._dx1 = dx1
-            self._dx2 = dx2
-            self._dx3 = dx3
-
-        return self._dx1, self._dx2, self._dx3
-
-    def _compute_dx(self, x, scaleTime=False) -> list[float]:
-        dx = []
-        for i in range(1, len(x) -1):
-            dx.append(self._point_dx(x[i-1], x[i+1], scaleTime=scaleTime))
-        dx.insert(0, dx[0])
-        dx.append(dx[len(dx) - 1])
-        return dx
-
-    def show(self):
-        plt.figure(figsize=(25, 4))
-        plt.plot(self.x)
-        plt.show()
-
-    def _point_dx(self, p1: float, p2: float, scaleTime=False):
-        if scaleTime:
-            return (p1 - p2) * self.signal.sampling
-        return p1 - p2
-
-    def bpm(self):
-        if self._bpm.empty:
-            bpm = []
-            for i in range(0, len(self.peaks()) - 1):
-                bpm.append(self.signal.sampling / abs(self.peaks()[i] - self.peaks()[i+1]) *  60)
-            self._bpm['bpm'] = bpm
-        return self._bpm
-
-    def zeig_dich(self):
-        dx1, dx2, dx3 = self.dx()
-        peaks = self.peaks()
-        _, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(25,16))
-
-        ax1.plot(self.x)
-        peak_val = [self.x[x] for x in peaks]
-        ax1.plot(peaks, peak_val, 'ro')
-        #ax1.vlines(peaks, ymin=min(self.x), ymax=max(self.x), color="C9")
-        ax1.legend(["PPG", "Peaks"], loc="upper right")
-
-        ax2.plot(dx1, color="C1")
-        max_slope = self.dx_peaks()
-        min_slope = self.dx_valleys()
-        ax2.plot(max_slope, [dx1[x] for x in max_slope], 'ro')
-        ax2.plot(min_slope, [dx1[x] for x in min_slope], 'bo')
-        ax2.legend(["PPG'", "ms", "mins"], loc="upper right")
-
-        ax3.plot(dx2, color="C3")
-        ax3.legend(["PPG''"], loc="upper right")
-
-        ax4.plot(dx3, color="C5",label="dx3")
-        ax4.legend(["PPG'''"], loc="upper right")
-        #plt.title(label="{0} Window".format(self.index))
-        plt.show()
-
-
+    def bpm(self, peaks):
+        bpm = []
+        for i in range(0, len(peaks) - 1):
+            bpm.append(self._x.sampling / abs(peaks[i] - peaks[i+1]) *  60)
+        return bpm
+    
+    def ibi(self, peaks):
+        ibi = [peaks[0] / self._x.sampling]
+        for i in range(1, len(peaks)):
+            ibi.append((peaks[i] - peaks[i-1]) / self._x.sampling)
+        return ibi

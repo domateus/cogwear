@@ -22,22 +22,22 @@ class Split():
         self.val = val
 
     def x_train(self):
-        return np.concatenate([s.x for s in self.train])
+        return  np.concatenate([s.x() for s in self.train])
 
     def y_train(self):
-        return np.concatenate([s.y for s in self.train])
+        return np.concatenate([s.y() for s in self.train])
 
     def x_test(self):
-        return np.concatenate([s.x for s in self.test])
+        return np.concatenate([s.x() for s in self.test])
 
     def y_test(self):
-        return np.concatenate([s.y for s in self.test])
+        return np.concatenate([s.y() for s in self.test])
 
     def x_val(self):
-        return np.concatenate([s.x for s in self.val])
+        return np.concatenate([s.x() for s in self.val])
 
     def y_val(self):
-        return np.concatenate([s.y for s in self.val])
+        return np.concatenate([s.y() for s in self.val])
 
 
     class Pre():
@@ -55,9 +55,10 @@ class Split():
 
 def losocv_splits() -> list[Split.Pre]:
     result = []
-    for subject in LOSOCV_SUBJECT_IDS:
+    subjects = LOSOCV_SUBJECT_IDS 
+    for subject in subjects:
         test_set = [f"{subject}"]
-        rest = [f"{x}" for x in LOSOCV_SUBJECT_IDS if not x == subject]
+        rest = [f"{x}" for x in subjects if not x == subject]
         val_set = random.sample(rest, 1)
         train_set = [x for x in rest if x not in val_set]
         result.append(Split.Pre(id=subject, train=train_set, test=test_set, val=val_set))
@@ -66,14 +67,14 @@ def losocv_splits() -> list[Split.Pre]:
 
 def create_classifier(classifier_name, input_shape, output_directory, hyperparameters, fold) -> Classifier:
     if classifier_name == 'fcn':
-        return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'cnn':
-        return Cnn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Cnn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'lstm':
-        return Lstm(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return Lstm(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
     if classifier_name == 'resnet':
-        return OneDResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
-    return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold)
+        return OneDResNet(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
+    return Fcn(output_directory, input_shape, hyperparameters=hyperparameters, fold=fold, name=classifier_name)
 
 
 def wipe_results():

@@ -1,26 +1,48 @@
 import scipy.stats as stats
+from matplotlib import pyplot as plt
 import numpy as np
 from abc import ABC
 from math import floor
 import os
 import pandas as pd
+from src.experiments.consts import ExperimentType
 from src.signals.signal import Signal
 
 class Subject(ABC):
-    def __init__(self, path: str, id: str, device: str, sensor: str):
+    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30, experiment_type=ExperimentType.END_TO_END):
         self.path = path
         self.device = device
         self.sampling = Subject.get_device_sampling(device, sensor)
         self.sensor = sensor
         self.id = id
         self._data = self.load()
-        discard_time = 4 * self.sampling
-        self._x = self._get_signal(discard_time)
-        self._y = self._data["y"][discard_time:-discard_time]
-        self.x, self.y = self.values()
+        self._x = self._get_signal()
+        self._y = self._data["y"]
+        self.experiment_type = experiment_type
+        self.window_duration = window_duration
+        self._computed_x = []
+        self._computed_y = []
 
-    def _get_signal(self, discard_time):
-        return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor][discard_time:-discard_time]])
+    def sts(self, data):
+        if isinstance(data, float) or len(data) == 0:
+            return 0, 0, 0, 0, 0
+        return np.std(data), np.mean(data), np.median(data), np.min(data), np.max(data)
+
+    def x(self):
+        if len(self._computed_x) > 0:
+            return self._computed_x
+        self._computed_x, self._computed_y = self.values()
+        return self._computed_x
+
+    def y(self):
+        if len(self._computed_y) > 0:
+            return self._computed_y
+        self._computed_x, self._computed_y = self.values()
+        return self._computed_y
+
+
+    def _get_signal(self):
+        return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor]])
 
     def _get_window(self, index=0, seconds=30, overlap_ratio=0.5):
         window_size = seconds * self._x.sampling
@@ -56,4 +78,10 @@ class Subject(ABC):
         return 64 if sensor == "ppg" else 4
 
     def load(self):
-        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv")).dropna()
+        return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))
+
+    def show(self, window, to_plot=[]):
+        data = to_plot if len(to_plot) > 0 else self.x()[window]
+        plt.figure(figsize=(25, 4))
+        plt.plot(data)
+        plt.show()
