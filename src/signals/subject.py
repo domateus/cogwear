@@ -19,21 +19,25 @@ class Subject(ABC):
         self._x = self._get_signal()
         self._y = self._data["y"]
         self.experiment_type = experiment_type
+        self.window_duration = window_duration
         self._computed_x = []
         self._computed_y = []
+
+    def sts(self, data):
+        if isinstance(data, float) or len(data) == 0:
+            return 0, 0, 0, 0, 0
+        return np.std(data), np.mean(data), np.median(data), np.min(data), np.max(data)
 
     def x(self):
         if len(self._computed_x) > 0:
             return self._computed_x
-        if ExperimentType.END_TO_END == self.experiment_type:
-            self._computed_x, self._computed_y = self.values()
+        self._computed_x, self._computed_y = self.values()
         return self._computed_x
 
     def y(self):
         if len(self._computed_y) > 0:
             return self._computed_y
-        if ExperimentType.END_TO_END == self.experiment_type:
-            self._computed_x, self._computed_y = self.values()
+        self._computed_x, self._computed_y = self.values()
         return self._computed_y
 
 

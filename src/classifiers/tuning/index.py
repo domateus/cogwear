@@ -6,9 +6,8 @@ import tensorflow as tf
 from src.experiments.experiment import Experiment
 from hyperopt import fmin, tpe,  Trials, STATUS_OK
 from keras.api.backend import clear_session
+from src.classifiers.tuning.utils import is_shallow
 
-def is_shallow(classifier):
-    return classifier in ['knn', 'svm', 'xgb']
 
 class Tuner():
     def __init__(self, experiment: Experiment):

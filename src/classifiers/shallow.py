@@ -40,14 +40,16 @@ class ShallowClassifier(ABC):
         os.makedirs(experiment.losocv_path, exist_ok=True)
         fold_index = fold_to_use if fold_to_use != -1 else randrange(len(experiment.splits))
         fold = experiment.splits[fold_index]
-        X = np.concatenate([fold.x_train(), fold.x_val()])
-        y = np.concatenate([fold.y_train(), fold.y_val()])
 
-        cols = X.shape[-1:][0]
-        X = np.reshape(X, (1, -1, cols))[0]
-        y = np.reshape(y, (1, -1))[0]
-        x_test = np.reshape(fold.x_test(), (1, -1, cols))[0]
-        y_test = np.reshape( fold.y_test(), (1, -1) )[0]
+        # test and validation data used together because one subject from eeg data has only
+        # one label as data sample
+        x_test = np.concatenate([fold.x_test(), fold.x_val()])
+        y_test = np.concatenate([fold.y_test(), fold.y_val()])
+        cols = x_test.shape[-1:][0]
+        X = np.reshape(fold.x_train(), (1, -1, cols))[0]
+        y = np.reshape(fold.y_train(), (1, -1))[0]
+        x_test = np.reshape(x_test, (1, -1, cols))[0]
+        y_test = np.reshape(y_test, (1, -1) )[0]
 
         clf = self.build_model(hyperparameters)
         clf.fit(X, y)

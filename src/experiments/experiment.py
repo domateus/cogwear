@@ -1,6 +1,7 @@
 import pandas as pd
 from math import ceil
 from random import randrange
+from src.classifiers.tuning.utils import is_shallow
 from src.data.utils import LOSOCV_SUBJECT_IDS, TEST_SUBJECT_IDS, Split, create_classifier,losocv_splits
 from abc import ABC
 from src.data.utils import SUBJECTS_IDS
@@ -40,6 +41,9 @@ class Experiment(ABC):
             self.splits.append(split.into(self.subjects))
 
     def shape(self):
+        if ExperimentType.FEATURE_ENGINEERING and not is_shallow(self.classifier):
+            x_test, y_test = self.get_test_data()
+            return np.shape(x_test)
         x_test, y_test = self.get_test_data()
         s = np.shape(x_test)
         return s[1:]
@@ -48,11 +52,26 @@ class Experiment(ABC):
     def get_train_data(self, fold: Split, percentage_data=1.):
         x_train, y_train, x_test, y_test, x_val, y_val = fold.x_train(), fold.y_train(), fold.x_test(), fold.y_test(), fold.x_val(), fold.y_val()
         x_train, y_train, x_test, y_test, x_val, y_val = self._partial(x_train, percentage_data), self._partial(y_train, percentage_data), self._partial(x_test, percentage_data), self._partial(y_test, percentage_data), self._partial(x_val, percentage_data),self._partial(y_val, percentage_data) 
+        if ExperimentType.FEATURE_ENGINEERING == self.type and not is_shallow(self.classifier):
+            cols = np.shape(x_val)[-1:][0]
+            # they need to be a normal list for keras to work
+            x_train = [*np.reshape(x_train,(cols,-1, 1))]
+            x_test = [*np.reshape(x_test,(cols,-1, 1))]
+            x_val = [*np.reshape(x_val,(cols,-1, 1))]
+            y_train = np.expand_dims(y_train, axis=1)
+            y_test = np.expand_dims(y_test, axis=1)
+            y_val = np.expand_dims(y_val, axis=1)
+
         return [*x_train], y_train, [*x_test], y_test, [*x_val], y_val
 
     def get_test_data(self):
         x = [*np.concatenate([s.x() for s in self.test_subjects])]
         y = np.concatenate([s.y() for s in self.test_subjects])
+        if ExperimentType.FEATURE_ENGINEERING == self.type and not is_shallow(self.classifier):
+            x = np.array(x)
+            cols = x.shape[-1:][0]
+            x = [*x.reshape((cols, -1, 1))]
+            y = np.expand_dims(y, axis=1)
         return x, y
 
 
@@ -67,8 +86,7 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.trials_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=-1)
 
-        metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,
-                       batch_size=hyperparameters.batch_size)
+        metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs, batch_size=hyperparameters.batch_size)
 
         self.logger.info("Finished e" + logging_message[1:])
 

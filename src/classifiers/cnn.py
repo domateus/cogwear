@@ -27,7 +27,7 @@ class Cnn(Classifier):
             input_layer = layers.Input(shape)
             input_layers.append(input_layer)
 
-            kernel_size = int(kernel_size_multipliers * 2)
+            kernel_size = int(kernel_size_multipliers * 7)
 
             conv1 = layers.Conv1D(filters=int(filters_multipliers * 6), kernel_size=kernel_size,
                                         padding=padding, activation='relu')(input_layer)
