@@ -14,10 +14,6 @@ SUBJECTS_IDS = list(it.chain(range(11, 19), range(20, 25)))
 LOSOCV_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(0, 10)]
 TEST_SUBJECT_IDS = [SUBJECTS_IDS[i] for i in range(10, 13)]
 
-SUBJECTS_IDS_PILOT = list(it.chain(range(0, 11)))
-LOSOCV_SUBJECT_IDS_PILOT = [SUBJECTS_IDS_PILOT[i] for i in range(0, 10)]
-TEST_SUBJECT_IDS_PILOT = [SUBJECTS_IDS_PILOT[10]]
-
 class Split():
     def __init__(self, id, train, test, val):
         self.id = id
@@ -26,22 +22,22 @@ class Split():
         self.val = val
 
     def x_train(self):
-        return np.concatenate([s.x for s in self.train])
+        return  np.concatenate([s.x() for s in self.train])
 
     def y_train(self):
-        return np.concatenate([s.y for s in self.train])
+        return np.concatenate([s.y() for s in self.train])
 
     def x_test(self):
-        return np.concatenate([s.x for s in self.test])
+        return np.concatenate([s.x() for s in self.test])
 
     def y_test(self):
-        return np.concatenate([s.y for s in self.test])
+        return np.concatenate([s.y() for s in self.test])
 
     def x_val(self):
-        return np.concatenate([s.x for s in self.val])
+        return np.concatenate([s.x() for s in self.val])
 
     def y_val(self):
-        return np.concatenate([s.y for s in self.val])
+        return np.concatenate([s.y() for s in self.val])
 
 
     class Pre():
@@ -57,9 +53,9 @@ class Split():
             val = [s for s in subjects if s.id in self.val]
             return Split(self.id, train, test, val)
 
-def losocv_splits(pilot=False) -> list[Split.Pre]:
+def losocv_splits() -> list[Split.Pre]:
     result = []
-    subjects = LOSOCV_SUBJECT_IDS if not pilot else LOSOCV_SUBJECT_IDS_PILOT
+    subjects = LOSOCV_SUBJECT_IDS 
     for subject in subjects:
         test_set = [f"{subject}"]
         rest = [f"{x}" for x in subjects if not x == subject]

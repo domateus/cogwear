@@ -68,12 +68,12 @@ def plot_epochs_metric(hist, file_name, metric='loss'):
     fig.savefig(file_name, bbox_inches='tight')
     plt.close(fig)
 
-def log_predicions(output_directory, y_pred, y_true, duration, fold):
+def log_predicions(output_directory, y_pred, y_true, duration, fold, round):
     df_metrics = calculate_metrics(y_true, y_pred, duration)
-    df_metrics.to_csv(output_directory + f'{fold}_df_metrics.csv', index=False)
+    df_metrics.to_csv(os.path.join(output_directory, f'{fold}-{round}_df_metrics.csv'), index=False)
 
-    plot_predictions(y_pred, y_true, os.path.join(output_directory, f'{fold}predictions.png'))
-    save_predictions(y_true, y_pred, os.path.join(output_directory,f"{fold}predictions.txt"))
+    plot_predictions(y_pred, y_true, os.path.join(output_directory, f'{fold}-{round}predictions.png'))
+    save_predictions(y_true, y_pred, os.path.join(output_directory,f"{fold}-{round}predictions.txt"))
 
     return df_metrics
 

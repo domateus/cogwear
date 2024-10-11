@@ -21,6 +21,8 @@ class Cnn(Classifier):
         shape = input_shape if len(input_shape) == 2 else input_shape[1:]
         cols = 1 if len(input_shape) == 2 else input_shape[0]
 
+        print(f'number of colums: {cols}')
+
         for _ in range(0, cols):
             input_layer = layers.Input(shape)
             input_layers.append(input_layer)

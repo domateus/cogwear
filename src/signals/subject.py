@@ -5,10 +5,11 @@ from abc import ABC
 from math import floor
 import os
 import pandas as pd
+from src.experiments.consts import ExperimentType
 from src.signals.signal import Signal
 
 class Subject(ABC):
-    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30):
+    def __init__(self, path: str, id: str, device: str, sensor: str, window_duration=30, experiment_type=ExperimentType.END_TO_END):
         self.path = path
         self.device = device
         self.sampling = Subject.get_device_sampling(device, sensor)
@@ -17,7 +18,28 @@ class Subject(ABC):
         self._data = self.load()
         self._x = self._get_signal()
         self._y = self._data["y"]
-        self.x, self.y = self.values(seconds=window_duration)
+        self.experiment_type = experiment_type
+        self.window_duration = window_duration
+        self._computed_x = []
+        self._computed_y = []
+
+    def sts(self, data):
+        if isinstance(data, float) or len(data) == 0:
+            return 0, 0, 0, 0, 0
+        return np.std(data), np.mean(data), np.median(data), np.min(data), np.max(data)
+
+    def x(self):
+        if len(self._computed_x) > 0:
+            return self._computed_x
+        self._computed_x, self._computed_y = self.values()
+        return self._computed_x
+
+    def y(self):
+        if len(self._computed_y) > 0:
+            return self._computed_y
+        self._computed_x, self._computed_y = self.values()
+        return self._computed_y
+
 
     def _get_signal(self):
         return Signal(self.sensor, self.sensor, self.sampling, [self._data[self.sensor]])
@@ -59,7 +81,7 @@ class Subject(ABC):
         return pd.read_csv(os.path.join(self.path, self.id, self.device + f"_{self.sensor}.csv"))
 
     def show(self, window, to_plot=[]):
-        data = to_plot if len(to_plot) > 0 else self.x[window]
+        data = to_plot if len(to_plot) > 0 else self.x()[window]
         plt.figure(figsize=(25, 4))
         plt.plot(data)
         plt.show()
