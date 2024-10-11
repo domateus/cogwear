@@ -52,12 +52,12 @@ class Classifier(ABC):
         backend.clear_session()
         return metrics, loss
 
-    def predict(self, x_test, y_true, model_path):
+    def predict(self, x_test, y_true, model_path, round):
         self.model.load_weights(model_path)
         start_time = time.time()
         y_pred_probabilities = self.model.predict(x_test)
         duration = time.time() - start_time
         y_pred = np.round(y_pred_probabilities)
-        metrics = log_predicions(self.output_directory, y_pred, y_true, duration, self.fold)
+        metrics = log_predicions(self.output_directory, y_pred, y_true, duration, self.fold, round)
         backend.clear_session()
         return metrics
