@@ -75,6 +75,8 @@ class PPGSubject(Subject):
         return data, ys
 
     def values(self):
+        if ExperimentType.END_TO_END ==self.experiment_type:
+            return super().values()
         ws, ys = self.all_windows()
         result = []
         for w in ws:

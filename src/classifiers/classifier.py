@@ -53,7 +53,9 @@ class Classifier(ABC):
         return metrics, loss
 
     def predict(self, x_test, y_true, model_path, round):
+        print(f'predicting')
         self.model.load_weights(model_path)
+        print(f'loaded weights')
         start_time = time.time()
         y_pred_probabilities = self.model.predict(x_test)
         duration = time.time() - start_time

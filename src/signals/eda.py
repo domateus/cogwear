@@ -46,6 +46,9 @@ class EDASubject(Subject):
         self.window_duration = window_duration
 
     def values(self):
+        if ExperimentType.END_TO_END == self.experiment_type:
+            print(f'right values')
+            return super().values()
         ws, ys = self.all_windows()
         result = []
         for w in ws:

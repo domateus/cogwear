@@ -41,11 +41,13 @@ class Experiment(ABC):
             self.splits.append(split.into(self.subjects))
 
     def shape(self):
-        if ExperimentType.FEATURE_ENGINEERING and not is_shallow(self.classifier):
-            x_test, y_test = self.get_test_data()
-            return np.shape(x_test)
-        x_test, y_test = self.get_test_data()
-        s = np.shape(x_test)
+        if ExperimentType.FEATURE_ENGINEERING ==self.type and not is_shallow(self.classifier):
+            rounds = self.get_test_data()
+            (x, y) = rounds[0]
+            return np.shape(x)
+        rounds = self.get_test_data()
+        (x, y) = rounds[0]
+        s = np.shape(x)
         return s[1:]
 
 
