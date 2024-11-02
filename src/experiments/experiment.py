@@ -65,14 +65,15 @@ class Experiment(ABC):
         return [*x_train], y_train, [*x_test], y_test, [*x_val], y_val
 
     def get_test_data(self):
-        x = [*np.concatenate([s.x() for s in self.test_subjects])]
-        y = np.concatenate([s.y() for s in self.test_subjects])
+        x = [s.x() for s in self.test_subjects]
+        y = [s.y() for s in self.test_subjects]
         if ExperimentType.FEATURE_ENGINEERING == self.type and not is_shallow(self.classifier):
-            x = np.array(x)
-            cols = x.shape[-1:][0]
-            x = [*x.reshape((cols, -1, 1))]
-            y = np.expand_dims(y, axis=1)
-        return x, y
+            for (x1, y1) in zip(x, y):
+                x1 = np.array(x1)
+                cols = x1.shape[-1:][0]
+                x1 = [*x1.reshape((cols, -1, 1))]
+                y1 = np.expand_dims(y1, axis=1)
+        return [*zip(x, y)]
 
 
     def run_once(self, hyperparameters: Hyperparameters, percentage_data=1.):
@@ -113,7 +114,7 @@ class Experiment(ABC):
 
     def test_best_models(self, tuner):
         os.makedirs(self.test_path, exist_ok=True)
-        x, y = self.get_test_data()
+        rounds = self.get_test_data()
         if len(tuner.load_trials()) == 0:
             tuner.tune(1)
         hyperparameters = tuner.best_hyperparameters()
@@ -124,8 +125,9 @@ class Experiment(ABC):
             classifier = create_classifier(classifier_name=self.classifier, output_directory=self.test_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold_id)
             print(f"model path: {os.path.join(self.losocv_path, model)}")
 
-            metrics = classifier.predict(x, y, os.path.join(self.losocv_path, model))
-            results[fold_id] = metrics
+            for r, (x, y) in enumerate(rounds):
+                metrics = classifier.predict(x, y, os.path.join(self.losocv_path, model), r)
+                results[fold_id] = metrics
         return results
 
     def _partial(self, data, percentage):

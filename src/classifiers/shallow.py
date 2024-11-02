@@ -16,13 +16,15 @@ class ShallowClassifier(ABC):
         self.preds = {}
 
     def test_values(self, experiment: Experiment):
-      x_test = np.concatenate([s.x() for s in experiment.test_subjects])
-      y_test = np.concatenate([s.y() for s in experiment.test_subjects])
+        x_test = [s.x() for s in experiment.test_subjects]
+        y_test = [s.y() for s in experiment.test_subjects]
 
-      cols = x_test.shape[-1:][0]
-      x_test = np.reshape(x_test, (1, -1, cols))[0]
-      y_test = np.reshape(y_test, (1, -1))[0]
-      return x_test, y_test
+        for (x, y) in zip(x_test, y_test):
+            cols = np.shape(x)[-1:][0]
+            x= np.reshape(x, (1, -1, cols))[0]
+            y= np.reshape(y, (1, -1))[0]
+
+        return [*zip(x_test, y_test)]
 
     @abstractmethod
     def build_model(self, hyperparameters) -> Any:
@@ -41,8 +43,6 @@ class ShallowClassifier(ABC):
         fold_index = fold_to_use if fold_to_use != -1 else randrange(len(experiment.splits))
         fold = experiment.splits[fold_index]
 
-        # test and validation data used together because one subject from eeg data has only
-        # one label as data sample
         x_test = np.concatenate([fold.x_test(), fold.x_val()])
         y_test = np.concatenate([fold.y_test(), fold.y_val()])
         cols = x_test.shape[-1:][0]
@@ -66,18 +66,19 @@ class ShallowClassifier(ABC):
 
     def predict(self, experiment: Experiment):
         os.makedirs(experiment.test_path, exist_ok=True)
-        x_test, y_test = self.test_values(experiment)
+        rounds = self.test_values(experiment)
         classifiers = [f for f in os.listdir(experiment.losocv_path) if 'pkl' in f]
         for filename in classifiers:
             f = os.path.join(experiment.losocv_path, filename)
             clf = self.load_model(f)
 
-            start_time = time.time()
-            y_pred = clf.predict(x_test)
-            duration = time.time() - start_time
+            for r, (x_test, y_test) in enumerate(rounds):
+                start_time = time.time()
+                y_pred = clf.predict(x_test)
+                duration = time.time() - start_time
 
-            fold_id = filename.split('.')[0].split('_')[1]
-            log_predicions(experiment.test_path, y_pred, y_test, duration, fold_id)
+                fold_id = filename.split('.')[0].split('_')[1]
+                log_predicions(experiment.test_path, y_pred, y_test, duration, fold_id, r)
 
     def show_results(self):
       for x in self.preds:
