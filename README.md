@@ -1,0 +1,1 @@
+Contains information from [CogWear](https://physionet.org/content/consumer-grade-wearables/1.0.0/), which is made available here under the [Open Database License (ODbL)](https://physionet.org/content/consumer-grade-wearables/view-license/1.0.0/).
