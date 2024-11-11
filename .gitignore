@@ -7,3 +7,4 @@ __pycache__/
 survey_gamification.zip
 vvv/**
 *.zip
+.idea
