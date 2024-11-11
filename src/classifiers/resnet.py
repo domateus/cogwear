@@ -14,7 +14,7 @@ class OneDResNet(Classifier):
 
         shape = input_shape if len(input_shape) == 2 else input_shape[1:]
         cols = 1 if len(input_shape) == 2 else input_shape[0]
-
+        assert self.hyperparameters.kernel_size_multiplier is not None
         for _ in range(0, cols):
             current_layer = layers.Input(shape)
             input_layers.append(current_layer)
@@ -22,7 +22,6 @@ class OneDResNet(Classifier):
             for i_depth in range(depth - 1):
                 mult = 2 if i_depth > 0 else 1
                 current_layer = self.build_bloc(int(mult * filter), current_layer)
-
             # BLOCK LAST
             conv_x = layers.Conv1D(filters=int(filter * 2),
                                          kernel_size=int(self.hyperparameters.kernel_size_multiplier * 8), padding='same')(

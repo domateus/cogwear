@@ -41,11 +41,13 @@ class Experiment(ABC):
             self.splits.append(split.into(self.subjects))
 
     def shape(self):
-        if ExperimentType.FEATURE_ENGINEERING and not is_shallow(self.classifier):
-            x_test, y_test = self.get_test_data()
-            return np.shape(x_test)
-        x_test, y_test = self.get_test_data()
-        s = np.shape(x_test)
+        if ExperimentType.FEATURE_ENGINEERING ==self.type and not is_shallow(self.classifier):
+            rounds = self.get_test_data()
+            (x, y) = rounds[0]
+            return np.shape(x)
+        rounds = self.get_test_data()
+        (x, y) = rounds[0]
+        s = np.shape(x)
         return s[1:]
 
 
@@ -87,6 +89,10 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.trials_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=-1)
 
+        # given that some models may have multiple inputs and keras not always works nicely with numpy
+        # depending on what models are being run, it might be necessary to change the data for X values
+        # from numpy array to normal list or the other way around 
+        # TODO: make this seamless, at the moment requires manually changing 🙃.
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs, batch_size=hyperparameters.batch_size)
 
         self.logger.info("Finished e" + logging_message[1:])
@@ -104,6 +110,10 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold.id)
 
+        # given that some models may have multiple inputs and keras not always works nicely with numpy
+        # depending on what models are being run, it might be necessary to change the data for X values
+        # from numpy array to normal list or the other way around 
+        # TODO: make this seamless, at the moment requires manually changing 🙃.
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,batch_size=hyperparameters.batch_size)
 
         self.logger.info(f"Fold: {fold.id} => loss: {loss}")

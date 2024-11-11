@@ -9,6 +9,54 @@ class Deep(Space):
     def dict(self, hyperparameters: Any):
         return hp.dict()
 
+    def yeehaw(self):
+        result = {}
+        result['cnn'] = {
+            'lr_power': hp.randint("lr_power", 3, 7),
+            'decay': hp.choice("decay", [.01, .001, .0001, .00001]),
+            'reduce_lr_factor': hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]),
+            'batch_size': hp.choice("batch_size", [2, 4, 8, 16, 32]),
+            'baseline_weight': hp.randint("baseline_weight", 2, 3),
+            'filters_multiplier': hp.choice("filters_multiplier", [0.5, 1, 2]),
+            'kernel_size_multiplier': hp.choice("kernel_size_multiplier", [0.5, 1, 2])
+        }
+        result["fcn"] = {
+            'lr_power': hp.randint("lr_power", 3, 7),
+            'decay': hp.choice("decay", [.01, .001, .0001, .00001]),
+            'reduce_lr_factor': hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]),
+            'batch_size': hp.choice("batch_size", [2, 4, 8, 16, 32]),
+            'baseline_weight': hp.randint("baseline_weight", 2, 3),
+            'filters_multiplier': hp.choice("filters_multiplier", [0.5, 1, 2]),
+            'kernel_size_multiplier': hp.choice("kernel_size_multiplier", [0.5, 1, 2])
+        }
+        result["lstm"] = {
+            'lr_power': hp.randint("lr_power", 3, 7),
+            'decay': hp.choice("decay", [.01, .001, .0001, .00001]),
+            'reduce_lr_factor': hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]),
+            'batch_size': hp.choice("batch_size", [2, 4, 8, 16, 32]),
+            'baseline_weight': hp.randint("baseline_weight", 2, 3),
+            'filters_multiplier': hp.choice("filters_multiplier", [0.5, 1, 2]),
+            'kernel_size_multiplier': hp.choice("kernel_size_multiplier", [0.5, 1, 2]),
+            'lstm_units': hp.choice("lstm_units", [1, 2, 3])
+        }
+        result["resnet"] = {
+            'lr_power': hp.randint("lr_power", 3, 7),
+            'decay': hp.choice("decay", [.01, .001, .0001, .00001]),
+            'reduce_lr_factor': hp.choice("reduce_lr_factor", [0.8, 0.5, 0.2, 0.1]),
+            'batch_size': hp.choice("batch_size", [2, 4, 8, 16, 32]),
+            'baseline_weight': hp.randint("baseline_weight", 2, 3),
+            'filters': hp.choice("filters", [16, 32, 64]),
+            'kernel_size_multiplier':hp.choice("kernel_size_multiplier", [1, 2, 4])
+        }
+        
+
+
+        subspace1 = [hp.choice("filters", [16, 32, 64])]
+        subspace2 = [hp.choice("kernel_size_multiplier", [1, 2, 4])]
+        result["resnet"] = (optimizer_subspace, hp.choice("depth", [2, 3, 4]), subspace1, subspace2)
+
+        return result[self.c]
+
     def get_search_space(self):
         result = {}
         optimizer_subspace = [hp.randint("lr_power", 3, 7), hp.choice("decay", [.01, .001, .0001, .00001]),

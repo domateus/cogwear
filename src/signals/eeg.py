@@ -43,8 +43,10 @@ class EEGExperiment(Experiment):
         return None, loss
 
     def shape(self):
-        x_test, _ = self.get_test_data()
+        rounds = self.get_test_data()
+        (x_test, y) = rounds[0]
         s = np.shape(x_test)
+        print(f'shape: {s}')
         return (s[0], *s[-2:])
 
     def get_train_data(self, fold: Split, percentage_data=1.):
@@ -57,11 +59,17 @@ class EEGExperiment(Experiment):
         return x_train, y_train, x_test, y_test, x_val, y_val
 
     def get_test_data(self):
-        x, y = super().get_test_data()
+        rounds = super().get_test_data()
 
-        x= [*np.swapaxes(x, 0,1)]
+        for k, (x, y) in enumerate(rounds):
+            print(f'was: {np.shape(x)}')
+            x= [*np.swapaxes(x, 0,1)]
+            print(f'x shape: {np.shape(x)}')
+            rounds[k] = (x, y)
 
-        return x, y
+        (aha, _) =rounds[0]
+        print(f'first round: {np.shape(aha)}')
+        return rounds
 
 
 
@@ -72,6 +80,8 @@ class EEGSubject(Subject):
         Subject.__init__(self, path=path, id=id, device="muse", sensor="eeg", window_duration=window_duration, experiment_type=experiment_type)
 
     def values(self):
+        if ExperimentType.END_TO_END == self.experiment_type:
+            return super().values()
         ws, ys = self.all_windows()
         result = []
         for w in ws:
@@ -127,7 +137,7 @@ class EEGSubject(Subject):
         return x, y
 
     def show(self, window, to_plot=[]):
-        _, ax = plt.subplots(5, figsize=(25, 20))
+        _, ax = plt.subplots(5, figsize=(25, 30))
         x = self.x()
         for i in range(0, np.shape(x)[1], 4):
             title = self._eeg_cols[i].split('_')[0]
