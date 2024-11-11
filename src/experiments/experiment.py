@@ -89,6 +89,10 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.trials_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=-1)
 
+        # given that some models may have multiple inputs and keras not always works nicely with numpy
+        # depending on what models are being run, it might be necessary to change the data for X values
+        # from numpy array to normal list or the other way around 
+        # TODO: make this seamless, at the moment requires manually changing 🙃.
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs, batch_size=hyperparameters.batch_size)
 
         self.logger.info("Finished e" + logging_message[1:])
@@ -106,6 +110,10 @@ class Experiment(ABC):
 
         classifier = create_classifier(classifier_name=self.classifier, output_directory=self.losocv_path, input_shape=self.shape(), hyperparameters=hyperparameters, fold=fold.id)
 
+        # given that some models may have multiple inputs and keras not always works nicely with numpy
+        # depending on what models are being run, it might be necessary to change the data for X values
+        # from numpy array to normal list or the other way around 
+        # TODO: make this seamless, at the moment requires manually changing 🙃.
         metrics, loss = classifier.fit(x_train, y_train, x_val, y_val, y_test, x_test=x_test, nb_epochs=hyperparameters.epochs,batch_size=hyperparameters.batch_size)
 
         self.logger.info(f"Fold: {fold.id} => loss: {loss}")

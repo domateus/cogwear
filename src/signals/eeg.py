@@ -137,7 +137,7 @@ class EEGSubject(Subject):
         return x, y
 
     def show(self, window, to_plot=[]):
-        _, ax = plt.subplots(5, figsize=(25, 20))
+        _, ax = plt.subplots(5, figsize=(25, 30))
         x = self.x()
         for i in range(0, np.shape(x)[1], 4):
             title = self._eeg_cols[i].split('_')[0]
